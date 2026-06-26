@@ -221,3 +221,10 @@ __marimo__/
 # Design-tool artifacts under app/ (not deliverables)
 app/.thumbnail
 app/uploads/
+
+# Node / Playwright (Split 08 e2e+a11y+responsive suite under app/)
+app/node_modules/
+app/test-results/
+app/playwright-report/
+app/blob-report/
+app/.cache/

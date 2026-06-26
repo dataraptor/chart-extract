@@ -95,7 +95,14 @@ def test_offsets_index_real_text_for_every_grounded_field(path_report_path):
             # All worked-example spans are exact matches, so the slice equals the span verbatim.
             assert 0 <= f.char_start <= f.char_end <= doc.n_chars
             assert doc.text[f.char_start : f.char_end] == f.source_span
+        elif f.source_span and f.match_quality != "none":
+            # ``not_assessed``: the value is null but the cited-absence span DID ground, so the
+            # offsets are retained (parity with the JS reference — drives the cyan cited-absence
+            # wash in the live UI). The slice still indexes the verbatim cited sentence.
+            assert f.char_start is not None and f.char_end is not None
+            assert doc.text[f.char_start : f.char_end] == f.source_span
         else:
+            # ``not_found`` (no span) / ``not_grounded`` (span didn't locate) → no offsets.
             assert f.char_start is None and f.char_end is None
 
 

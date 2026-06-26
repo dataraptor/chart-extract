@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ChartExtract — grounded document extraction</title>
 <script src="./support.js"></script>
 <script src="./api.js"></script>
 <script src="./map.js"></script>
@@ -25,6 +26,15 @@
   ::-webkit-scrollbar-thumb{background:#E0E3E8;border-radius:7px;border:3px solid transparent;background-clip:padding-box;}
   ::-webkit-scrollbar-thumb:hover{background:#CFD3DA;background-clip:padding-box;}
   ::-webkit-scrollbar-track{background:transparent;}
+  /* Split 08 a11y: reduced-motion — washes + final numbers still appear, only the motion stops. */
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important;}
+  }
+  /* Split 08 responsive: narrow (<900px) stacks the panes with Extraction (the answer) on top. */
+  @media (max-width:899px){
+    #ce-panes{flex-direction:column-reverse!important;flex-wrap:nowrap!important;}
+    #ce-panes>section{flex:1 1 auto!important;min-width:0!important;}
+  }
 </style>
 </helmet>
 <div style="height:100vh;display:flex;flex-direction:column;background:#FFFFFF;overflow:hidden;">
@@ -36,9 +46,9 @@
       </div>
       <div style="display:flex;flex-direction:column;line-height:1.18;">
         <span style="font-weight:600;font-size:15px;letter-spacing:-.015em;color:#15181D;">ChartExtract</span>
-        <span style="font-size:11px;color:#8A909A;letter-spacing:-.005em;">grounded document extraction</span>
+        <span style="font-size:11px;color:#5A616B;letter-spacing:-.005em;">grounded document extraction</span>
       </div>
-      <span style="display:flex;align-items:center;gap:7px;margin-left:8px;padding:5px 11px 5px 9px;border-radius:999px;background:#FAF3E7;box-shadow:inset 0 0 0 1px #F0E4CE;font-size:12px;color:#9A6B22;letter-spacing:-.005em;">
+      <span style="display:flex;align-items:center;gap:7px;margin-left:8px;padding:5px 11px 5px 9px;border-radius:999px;background:#FAF3E7;box-shadow:inset 0 0 0 1px #F0E4CE;font-size:12px;color:#80561A;letter-spacing:-.005em;">
         <span style="width:6px;height:6px;border-radius:50%;background:#DB7D12;"></span>synthetic data &middot; demo, not a medical device
       </span>
     </div>
@@ -56,21 +66,21 @@
     <span style="display:flex;align-items:center;gap:7px;padding:6px 11px;border-radius:8px;background:#F1F3F6;box-shadow:inset 0 0 0 1px #E8EAEE;font-family:'JetBrains Mono',monospace;font-size:12px;color:#545B66;">
       <span style="width:6px;height:6px;border-radius:50%;background:#3975EE;"></span>{{ modelChip }}
     </span>
-    <span style="display:flex;align-items:center;padding:6px 11px;border-radius:8px;background:#E7F4EC;box-shadow:inset 0 0 0 1px rgba(21,145,91,.20);font-family:'JetBrains Mono',monospace;font-size:12px;color:#15915B;">{{ cost }}/run</span>
+    <span style="display:flex;align-items:center;padding:6px 11px;border-radius:8px;background:#E7F4EC;box-shadow:inset 0 0 0 1px rgba(21,145,91,.20);font-family:'JetBrains Mono',monospace;font-size:12px;color:#0B6E3F;">{{ cost }}/run</span>
 
     <button onClick="{{ rerun }}" title="Re-run extraction" style="display:flex;align-items:center;justify-content:center;width:33px;height:33px;border:none;cursor:pointer;font-size:15px;color:#545B66;background:#FFFFFF;border-radius:8px;box-shadow:inset 0 0 0 1px #E2E5EA;transition:all 150ms ease;" style-hover="color:#15181D;box-shadow:inset 0 0 0 1px #CFD3DA;background:#F6F7F9;">&#8635;</button>
   </header>
 
   <sc-if value="{{ isExtraction }}" hint-placeholder-val="{{ true }}">
   <div style="flex:1;min-height:0;display:flex;">
-    <div style="flex:1;min-height:0;display:flex;flex-wrap:wrap;background:#FFFFFF;overflow:hidden;">
+    <div id="ce-panes" style="flex:1;min-height:0;display:flex;flex-wrap:wrap;background:#FFFFFF;overflow:hidden;">
 
       <section style="flex:1 1 360px;min-width:300px;min-height:0;display:flex;flex-direction:column;background:#FAFBFC;box-shadow:inset -1px 0 0 #E8EAEE;">
         <header style="flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:clamp(13px,1.2vw,17px) clamp(14px,2vw,26px);box-shadow:inset 0 -1px 0 #E8EAEE;">
-          <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#A6ABB3;text-transform:uppercase;">Source &middot; {{ docFile }}</span>
-          <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:#15915B;font-weight:500;"><span style="width:6px;height:6px;border-radius:50%;background:#15915B;"></span>text-layer ready</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#5A616B;text-transform:uppercase;">Source &middot; {{ docFile }}</span>
+          <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:#0B6E3F;font-weight:500;"><span style="width:6px;height:6px;border-radius:50%;background:#15915B;"></span>text-layer ready</span>
         </header>
-        <div id="ce-doc" style="flex:1;min-height:0;padding:clamp(16px,1.6vw,26px) clamp(14px,2vw,26px);overflow:auto;">
+        <div id="ce-doc" tabIndex="0" role="region" aria-label="Source document" style="flex:1;min-height:0;padding:clamp(16px,1.6vw,26px) clamp(14px,2vw,26px);overflow:auto;">
           {{ documentBody }}
         </div>
       </section>
@@ -78,8 +88,8 @@
       <section style="flex:1 1 380px;min-width:320px;min-height:0;display:flex;flex-direction:column;background:#FFFFFF;">
         <header style="flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:clamp(13px,1.2vw,17px) clamp(14px,2vw,26px);box-shadow:inset 0 -1px 0 #E8EAEE;">
           <span style="display:flex;align-items:center;gap:9px;min-width:0;">
-            <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#A6ABB3;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Extraction &middot; {{ schemaName }}</span>
-            <span style="flex:none;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.04em;color:#2A6FD0;background:#EEF4FD;padding:3px 7px;border-radius:6px;">routed auto 0.92</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#5A616B;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Extraction &middot; {{ schemaName }}</span>
+            <span style="flex:none;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.04em;color:#2266C9;background:#EEF4FD;padding:3px 7px;border-radius:6px;">routed auto 0.92</span>
           </span>
           <span style="display:flex;gap:7px;flex:none;">
             <sc-if value="{{ isPath }}" hint-placeholder-val="{{ true }}">
@@ -88,25 +98,25 @@
             <button onClick="{{ toggleJSON }}" style="border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#545B66;background:#F1F3F6;padding:6px 11px;border-radius:8px;box-shadow:inset 0 0 0 1px #E8EAEE;transition:all 150ms ease;">{{ jsonLabel }}</button>
           </span>
         </header>
-        <div style="flex:1;min-height:0;overflow:auto;">
+        <div data-testid="fields" role="group" aria-label="Extracted fields" aria-live="polite" style="flex:1;min-height:0;overflow:auto;">
           <sc-for list="{{ fields }}" as="field" hint-placeholder-count="7">
-            <div onMouseEnter="{{ field.onEnter }}" onMouseLeave="{{ field.onLeave }}" onClick="{{ field.onClick }}" style="display:flex;flex-direction:column;gap:6px;padding:clamp(12px,1.05vw,16px) clamp(14px,2vw,26px);box-shadow:inset 3px 0 0 {{ field.barColor }},inset 0 -1px 0 #EDEFF2;background:{{ field.rowBg }};cursor:pointer;transition:background 150ms ease;">
+            <div data-testid="field-row" data-field="{{ field.name }}" data-flag="{{ field.flag }}" tabIndex="0" role="button" aria-label="{{ field.ariaLabel }}" onMouseEnter="{{ field.onEnter }}" onMouseLeave="{{ field.onLeave }}" onFocus="{{ field.onEnter }}" onBlur="{{ field.onLeave }}" onKeyDown="{{ field.onKeyDown }}" onClick="{{ field.onClick }}" style-focus="outline:2px solid #3975EE;outline-offset:-2px;" style="display:flex;flex-direction:column;gap:6px;padding:clamp(12px,1.05vw,16px) clamp(14px,2vw,26px);box-shadow:inset 3px 0 0 {{ field.barColor }},inset 0 -1px 0 #EDEFF2;background:{{ field.rowBg }};cursor:pointer;transition:background 150ms ease;">
               <div style="display:flex;align-items:baseline;justify-content:space-between;gap:14px;">
-                <span style="font-family:'JetBrains Mono',monospace;font-size:clamp(11.5px,.85vw,12.5px);color:#8A909A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ field.name }}</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:clamp(11.5px,.85vw,12.5px);color:#5A616B;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ field.name }}</span>
                 <span style="font-size:clamp(14px,1vw,15.5px);font-weight:500;letter-spacing:-.01em;color:{{ field.valueColor }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;">{{ field.valueDisplay }}</span>
               </div>
               <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;">
-                <span style="font-size:clamp(11.5px,.85vw,12.5px);color:#9AA0A8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">{{ field.detail }}</span>
+                <span style="font-size:clamp(11.5px,.85vw,12.5px);color:#5A616B;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">{{ field.detail }}</span>
                 <span style="display:flex;align-items:center;gap:10px;flex:none;">
                   <sc-if value="{{ field.showStatus }}" hint-placeholder-val="{{ false }}">
-                    <span style="font-size:11px;font-weight:500;color:{{ field.barColor }};letter-spacing:-.005em;background:{{ field.statusBg }};padding:2px 8px;border-radius:6px;">{{ field.statusLabel }}</span>
+                    <span style="font-size:11px;font-weight:500;color:{{ field.statusColor }};letter-spacing:-.005em;background:{{ field.statusBg }};padding:2px 8px;border-radius:6px;">{{ field.statusLabel }}</span>
                   </sc-if>
                   <sc-if value="{{ field.grounded }}" hint-placeholder-val="{{ true }}">
                     <span style="display:flex;align-items:center;gap:8px;">
                       <span style="position:relative;width:clamp(40px,5vw,68px);height:4px;background:#ECEEF1;border-radius:999px;overflow:hidden;">
                         <span style="position:absolute;left:0;top:0;bottom:0;width:{{ field.confPct }};background:{{ field.confColor }};border-radius:999px;transition:width .42s cubic-bezier(.22,.61,.36,1);"></span>
                       </span>
-                      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#8A909A;font-variant-numeric:tabular-nums;">{{ field.confText }}</span>
+                      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#5A616B;font-variant-numeric:tabular-nums;">{{ field.confText }}</span>
                     </span>
                   </sc-if>
                 </span>
@@ -118,7 +128,7 @@
             <sc-for list="{{ ghosts }}" as="g" hint-placeholder-count="0">
               <div style="display:flex;flex-direction:column;gap:9px;padding:clamp(12px,1.05vw,16px) clamp(14px,2vw,26px);box-shadow:inset 3px 0 0 #E8EAEE,inset 0 -1px 0 #EDEFF2;">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
-                  <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#B6BBC2;animation:ceShimmer 1.3s ease infinite;">{{ g.name }}</span>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#5A616B;animation:ceShimmer 1.3s ease infinite;">{{ g.name }}</span>
                   <span style="width:58px;height:10px;border-radius:5px;background:#EEF0F3;animation:ceShimmer 1.3s ease infinite;"></span>
                 </div>
                 <span style="width:42%;height:7px;border-radius:4px;background:#F2F4F6;animation:ceShimmer 1.3s ease infinite;"></span>
@@ -127,7 +137,7 @@
           </sc-if>
 
           <sc-if value="{{ showJSON }}" hint-placeholder-val="{{ false }}">
-            <pre style="margin:0;padding:clamp(16px,1.6vw,24px) clamp(14px,2vw,26px);background:#F8F9FB;box-shadow:inset 0 1px 0 #E8EAEE;font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.65;color:#545B66;overflow:auto;white-space:pre;">{{ jsonText }}</pre>
+            <pre data-testid="json-inspector" style="margin:0;padding:clamp(16px,1.6vw,24px) clamp(14px,2vw,26px);background:#F8F9FB;box-shadow:inset 0 1px 0 #E8EAEE;font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.65;color:#545B66;overflow:auto;white-space:pre;">{{ jsonText }}</pre>
           </sc-if>
         </div>
       </section>
@@ -136,36 +146,36 @@
   </sc-if>
 
   <sc-if value="{{ isEval }}" hint-placeholder-val="{{ false }}">
-  <div style="flex:1;min-height:0;padding:clamp(14px,2vw,34px);overflow:auto;">
+  <div tabIndex="0" role="region" aria-label="Evaluation leaderboard" style="flex:1;min-height:0;padding:clamp(14px,2vw,34px);overflow:auto;">
     <div style="max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:clamp(14px,1.6vw,22px);">
 
       <div style="display:flex;flex-wrap:wrap;gap:clamp(12px,1.4vw,18px);">
         <div style="flex:1 1 200px;background:#FFFFFF;border-radius:13px;padding:clamp(18px,1.7vw,24px);box-shadow:inset 0 0 0 1px #E8EAEE;">
-          <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#A6ABB3;text-transform:uppercase;margin-bottom:13px;">Macro-F1</div>
-          <div style="font-size:clamp(32px,3.2vw,46px);font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:#15181D;line-height:1;">{{ macroF1 }}</div>
-          <div style="font-size:12px;color:#8A909A;margin-top:9px;">frozen gold &middot; {{ goldCount }} docs &middot; N=5 runs</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#5A616B;text-transform:uppercase;margin-bottom:13px;">Macro-F1</div>
+          <div style="font-size:clamp(32px,3.2vw,46px);font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:#15181D;line-height:1;" data-testid="eval-macro-f1">{{ macroF1 }}</div>
+          <div style="font-size:12px;color:#5A616B;margin-top:9px;">frozen gold &middot; {{ goldCount }} docs &middot; N=5 runs</div>
         </div>
         <div style="flex:1 1 200px;background:#FFFFFF;border-radius:13px;padding:clamp(18px,1.7vw,24px);box-shadow:inset 0 0 0 1px rgba(21,145,91,.28);animation:ceRing 1.8s ease 1;">
-          <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#15915B;text-transform:uppercase;margin-bottom:13px;">Hallucination rate</div>
-          <div style="font-size:clamp(32px,3.2vw,46px);font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:#15915B;line-height:1;">{{ halluc }}</div>
-          <div style="font-size:12px;color:#8A909A;margin-top:9px;">0 invented values across the set</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#0B6E3F;text-transform:uppercase;margin-bottom:13px;">Hallucination rate</div>
+          <div style="font-size:clamp(32px,3.2vw,46px);font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:#15915B;line-height:1;" data-testid="eval-halluc">{{ halluc }}</div>
+          <div style="font-size:12px;color:#5A616B;margin-top:9px;">0 invented values across the set</div>
         </div>
         <div style="flex:1 1 180px;background:#FFFFFF;border-radius:13px;padding:clamp(18px,1.7vw,24px);box-shadow:inset 0 0 0 1px #E8EAEE;">
-          <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#A6ABB3;text-transform:uppercase;margin-bottom:13px;">Routing acc</div>
-          <div style="font-size:clamp(32px,3.2vw,46px);font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:#15181D;line-height:1;">{{ routing }}</div>
-          <div style="font-size:12px;color:#8A909A;margin-top:9px;">doc-type classifier</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#5A616B;text-transform:uppercase;margin-bottom:13px;">Routing acc</div>
+          <div style="font-size:clamp(32px,3.2vw,46px);font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:#15181D;line-height:1;" data-testid="eval-routing">{{ routing }}</div>
+          <div style="font-size:12px;color:#5A616B;margin-top:9px;">doc-type classifier</div>
         </div>
       </div>
 
       <div style="background:#FFFFFF;border-radius:13px;overflow:hidden;box-shadow:inset 0 0 0 1px #E8EAEE;">
-        <div style="display:grid;grid-template-columns:1.6fr .6fr .6fr .6fr 1.5fr;gap:12px;padding:clamp(13px,1.2vw,18px) clamp(18px,1.7vw,26px);box-shadow:inset 0 -1px 0 #E8EAEE;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#A6ABB3;">
+        <div style="display:grid;grid-template-columns:1.6fr .6fr .6fr .6fr 1.5fr;gap:12px;padding:clamp(13px,1.2vw,18px) clamp(18px,1.7vw,26px);box-shadow:inset 0 -1px 0 #E8EAEE;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#5A616B;">
           <span>Field</span><span style="text-align:right;">Prec</span><span style="text-align:right;">Recall</span><span style="text-align:right;">F1</span><span style="padding-left:14px;">Distribution</span>
         </div>
         <sc-for list="{{ evalRows }}" as="r" hint-placeholder-count="9">
-          <div style="display:grid;grid-template-columns:1.6fr .6fr .6fr .6fr 1.5fr;gap:12px;align-items:center;padding:clamp(10px,.95vw,14px) clamp(18px,1.7vw,26px);box-shadow:inset 0 -1px 0 #EDEFF2;">
-            <span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#545B66;overflow:hidden;text-overflow:ellipsis;">{{ r.name }}<span style="color:#A6ABB3;"> {{ r.note }}</span></span>
-            <span style="text-align:right;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#8A909A;font-variant-numeric:tabular-nums;">{{ r.p }}</span>
-            <span style="text-align:right;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#8A909A;font-variant-numeric:tabular-nums;">{{ r.r }}</span>
+          <div data-testid="eval-row" style="display:grid;grid-template-columns:1.6fr .6fr .6fr .6fr 1.5fr;gap:12px;align-items:center;padding:clamp(10px,.95vw,14px) clamp(18px,1.7vw,26px);box-shadow:inset 0 -1px 0 #EDEFF2;">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#545B66;overflow:hidden;text-overflow:ellipsis;">{{ r.name }}<span style="color:#5A616B;"> {{ r.note }}</span></span>
+            <span style="text-align:right;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#5A616B;font-variant-numeric:tabular-nums;">{{ r.p }}</span>
+            <span style="text-align:right;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#5A616B;font-variant-numeric:tabular-nums;">{{ r.r }}</span>
             <span style="text-align:right;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#15181D;font-variant-numeric:tabular-nums;">{{ r.f1 }}</span>
             <span style="display:flex;align-items:center;padding-left:14px;"><span style="height:5px;border-radius:999px;background:#15915B;width:{{ r.w }};transition:width .5s ease;"></span></span>
           </div>
@@ -173,28 +183,28 @@
       </div>
 
       <div style="background:#FFFFFF;border-radius:13px;padding:clamp(18px,1.7vw,24px);box-shadow:inset 0 0 0 1px #E8EAEE;">
-        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#A6ABB3;margin-bottom:15px;">Cost &times; accuracy</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#5A616B;margin-bottom:15px;">Cost &times; accuracy</div>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;padding-bottom:14px;box-shadow:inset 0 -1px 0 #EDEFF2;">
-          <span style="font-size:14px;font-weight:500;letter-spacing:-.01em;color:#15181D;">Opus 4.8 <span style="color:#A6ABB3;font-size:11.5px;font-weight:400;">headline</span></span>
-          <span style="display:flex;gap:22px;font-family:'JetBrains Mono',monospace;font-size:13px;"><span style="color:#8A909A;">F1 0.94</span><span style="color:#15181D;">$0.021/doc</span></span>
+          <span style="font-size:14px;font-weight:500;letter-spacing:-.01em;color:#15181D;">Opus 4.8 <span style="color:#5A616B;font-size:11.5px;font-weight:400;">headline</span></span>
+          <span style="display:flex;gap:22px;font-family:'JetBrains Mono',monospace;font-size:13px;"><span style="color:#5A616B;">F1 0.94</span><span style="color:#15181D;">$0.021/doc</span></span>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;padding-top:14px;">
-          <span style="font-size:14px;font-weight:500;letter-spacing:-.01em;color:#15181D;">Sonnet 4.6 <span style="color:#A6ABB3;font-size:11.5px;font-weight:400;">cost row</span></span>
-          <span style="display:flex;gap:22px;font-family:'JetBrains Mono',monospace;font-size:13px;"><span style="color:#8A909A;">F1 0.90</span><span style="color:#15181D;">$0.011/doc</span><span style="color:#15915B;">&darr;48%</span></span>
+          <span style="font-size:14px;font-weight:500;letter-spacing:-.01em;color:#15181D;">Sonnet 4.6 <span style="color:#5A616B;font-size:11.5px;font-weight:400;">cost row</span></span>
+          <span style="display:flex;gap:22px;font-family:'JetBrains Mono',monospace;font-size:13px;"><span style="color:#5A616B;">F1 0.90</span><span style="color:#15181D;">$0.011/doc</span><span style="color:#0B6E3F;">&darr;48%</span></span>
         </div>
       </div>
 
-      <span style="font-size:12px;color:#9AA0A8;line-height:1.65;max-width:680px;">{{ goldCount }} synthetic documents &mdash; report F1 with wide confidence intervals on this small gold set. Synthetic or public documents only, never real PHI.</span>
+      <span style="font-size:12px;color:#5A616B;line-height:1.65;max-width:680px;">{{ goldCount }} synthetic documents &mdash; report F1 with wide confidence intervals on this small gold set. Synthetic or public documents only, never real PHI.</span>
     </div>
   </div>
   </sc-if>
 
   <footer style="flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:clamp(10px,1.3vw,20px);padding:10px clamp(14px,2vw,26px);background:#FFFFFF;box-shadow:inset 0 1px 0 #E8EAEE;font-size:clamp(11px,.85vw,12.5px);">
-    <span style="color:#545B66;font-weight:500;letter-spacing:-.01em;">{{ countsText }}</span>
-    <span style="margin-left:auto;display:flex;flex-wrap:wrap;align-items:center;gap:clamp(10px,1.3vw,18px);font-family:'JetBrains Mono',monospace;color:#8A909A;font-size:11.5px;">
+    <span data-testid="footer-counts" style="color:#545B66;font-weight:500;letter-spacing:-.01em;">{{ countsText }}</span>
+    <span style="margin-left:auto;display:flex;flex-wrap:wrap;align-items:center;gap:clamp(10px,1.3vw,18px);font-family:'JetBrains Mono',monospace;color:#5A616B;font-size:11.5px;">
       <span>{{ latency }}</span>
-      <span style="color:#A6ABB3;">{{ pv }} &middot; {{ sv }}</span>
-      <span style="color:#B6BBC2;">synthetic demo &middot; not a real service</span>
+      <span style="color:#5A616B;">{{ pv }} &middot; {{ sv }}</span>
+      <span style="color:#5A616B;">synthetic demo &middot; not a real service</span>
     </span>
   </footer>
 
@@ -209,14 +219,29 @@ class Component extends DCLogic {
   state = { view:'extraction', sample:'pathology', revealed:0, streaming:false, done:false, active:null, pinned:[], showJSON:false, showCaught:false,
             mode:null, result:null, docText:'', samples:[], evalReport:null, loading:true, apiError:null };
 
+  // Split 08 a11y: every flag carries an icon glyph so color is never the only signal — the chip
+  // renders `icon + label` for accepted rows too (color-blind safe; asserted by the a11y suite).
+  // `c` is the bright bar/meter color (non-text, decorative); `tc` is a darker, same-hue text color
+  // that holds WCAG-AA (≥4.5:1) on the chip's tinted `bg` (the bright `c` did not, on small text).
   FLAGS = {
-    accepted:{c:'#15915B',bg:'#E7F4EC',label:'accepted'},
-    needs_review:{c:'#B07520',bg:'#FAF1E3',label:'needs review'},
-    ambiguous_span:{c:'#B07520',bg:'#FAF1E3',label:'ambiguous'},
-    not_assessed:{c:'#1593AB',bg:'#E4F4F7',label:'not assessed'},
-    not_found:{c:'#8A909A',bg:'#F1F3F6',label:'not found'},
-    not_grounded:{c:'#CB4A45',bg:'#FBECEB',label:'not grounded'},
+    accepted:{c:'#15915B',bg:'#E7F4EC',tc:'#0B6E3F',label:'accepted',icon:'✓'},
+    needs_review:{c:'#B07520',bg:'#FAF1E3',tc:'#8A5A14',label:'needs review',icon:'⚠'},
+    ambiguous_span:{c:'#B07520',bg:'#FAF1E3',tc:'#8A5A14',label:'ambiguous',icon:'≈'},
+    not_assessed:{c:'#1593AB',bg:'#E4F4F7',tc:'#0E6D7E',label:'not assessed',icon:'⊘'},
+    not_found:{c:'#5A616B',bg:'#F1F3F6',tc:'#5A616B',label:'not found',icon:'∅'},
+    not_grounded:{c:'#CB4A45',bg:'#FBECEB',tc:'#B23A35',label:'not grounded',icon:'✕'},
   };
+
+  // Spoken flag meaning for screen-reader accessible names (the *reason* for a null, not just color).
+  FLAG_MEANING = {
+    accepted:'accepted',
+    needs_review:'needs review',
+    ambiguous_span:'ambiguous span',
+    not_assessed:'not assessed — document states it was not determined',
+    not_found:'not found — no mention in the document',
+    not_grounded:'not grounded — model proposed a value but the span could not be located',
+  };
+  Q_MEANING = { exact:'exact match', whitespace:'whitespace-tolerant match', prefix:'prefix match', none:'no match' };
 
   TEXT = `SURGICAL PATHOLOGY REPORT
 Accession No: SP-26-04417        Reported: 2026-06-22
@@ -306,6 +331,10 @@ SMOKING STATUS: Former smoker, quit 2015.`;
     const total = this.grounded().length;
     this.setState({ streaming:true, revealed:0, done:false, active:null, pinned:[] });
     if(total === 0){ this.setState({ streaming:false, done:true }); return; }
+    // Split 08 a11y: with prefers-reduced-motion the staged reveal is motion — show every row (and
+    // the final counts) instantly instead of staggering them in. Nothing is gated behind animation.
+    const reduce = (typeof matchMedia !== 'undefined') && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(reduce){ this.setState({ revealed:total, streaming:false, done:true }); return; }
     this._t = setInterval(()=>{
       this.setState(s=>{
         const n = s.revealed + 1;
@@ -483,7 +512,7 @@ SMOKING STATUS: Former smoker, quit 2015.`;
     const S = this.state;
     const gf = this.grounded();
     const active = new Set([...(S.pinned||[]), S.active].filter(Boolean));
-    const confColor = c => c>=0.8 ? '#15915B' : c>=0.6 ? '#B07520' : '#8A909A';
+    const confColor = c => c>=0.8 ? '#15915B' : c>=0.6 ? '#B07520' : '#5A616B';
     const pillShadow = '0 1px 2px rgba(16,24,40,.10),inset 0 0 0 1px rgba(16,24,40,.02)';
 
     const all = gf.map(f=>{
@@ -494,14 +523,23 @@ SMOKING STATUS: Former smoker, quit 2015.`;
       else if(f.flag==='not_assessed') detail = 'cites \u201C'+f.span+'\u201D';
       else if(f.flag==='not_grounded') detail = 'model proposed \u201C'+f.proposed+'\u201D \u00B7 span not located';
       else detail = '\u201C'+f.span+'\u201D \u00B7 '+f.q + (f.flag==='ambiguous_span' && f.count ? ' \u00B7 1 of '+f.count : '');
+      // Split 08 a11y: a single accessible name conveying name / value-or-null / flag meaning /
+      // confidence / match-quality \u2014 nulls announce the *reason*, not just "null".
+      const meaning = this.FLAG_MEANING[f.flag] || f.flag;
+      const ariaLabel = isNull
+        ? f.name + ', null, ' + meaning
+        : f.name + ', ' + String(f.value) + ', ' + meaning + ', confidence ' + (f.conf||0).toFixed(2) + ', ' + (this.Q_MEANING[f.q] || f.q);
       return {
         name:f.name,
+        flag:f.flag,
+        ariaLabel,
         valueDisplay: isNull ? '\u2014' : String(f.value),
-        valueColor: isNull ? '#B6BBC2' : '#15181D',
+        valueColor: isNull ? '#6A707A' : '#15181D',
         barColor: fl.c,
+        statusColor: fl.tc,
         statusBg: fl.bg,
-        showStatus: f.flag !== 'accepted',
-        statusLabel: fl.label,
+        showStatus: true,
+        statusLabel: fl.icon + ' ' + fl.label,
         rowBg: active.has(f.name) ? '#F4F6F9' : 'transparent',
         detail, grounded: !isNull,
         confPct: Math.round((f.conf||0)*100)+'%',
@@ -510,6 +548,25 @@ SMOKING STATUS: Former smoker, quit 2015.`;
         onEnter: ()=> this.setState({ active:f.name }),
         onLeave: ()=> this.setState(s=> s.active===f.name ? { active:null } : null),
         onClick: ()=> this.setState(s=>{ const p=new Set(s.pinned); p.has(f.name)?p.delete(f.name):p.add(f.name); return { pinned:[...p], active:f.name }; }),
+        // Keyboard parity (\u00A79): arrows move between rows, Enter/Space pins, Esc clears all pins.
+        onKeyDown: (e)=>{
+          const k = e.key;
+          if(k === 'Enter' || k === ' ' || k === 'Spacebar'){
+            e.preventDefault();
+            this.setState(s=>{ const p=new Set(s.pinned); p.has(f.name)?p.delete(f.name):p.add(f.name); return { pinned:[...p], active:f.name }; });
+          } else if(k === 'Escape'){
+            e.preventDefault();
+            this.setState({ pinned:[] });
+          } else if(k === 'ArrowDown' || k === 'ArrowUp'){
+            e.preventDefault();
+            try{
+              const rows = Array.prototype.slice.call(document.querySelectorAll('[data-testid="field-row"]'));
+              const i = rows.indexOf(e.currentTarget);
+              const j = k === 'ArrowDown' ? Math.min(rows.length-1, i+1) : Math.max(0, i-1);
+              if(rows[j]) rows[j].focus();
+            }catch(err){}
+          }
+        },
       };
     });
 
@@ -553,10 +610,10 @@ SMOKING STATUS: Former smoker, quit 2015.`;
       schemaName: S.sample==='intake' ? 'IntakeSchema' : 'PathologySchema',
       isPath: S.sample==='pathology',
       pathBg: S.sample==='pathology' ? '#FFFFFF' : 'transparent',
-      pathColor: S.sample==='pathology' ? '#15181D' : '#8A909A',
+      pathColor: S.sample==='pathology' ? '#15181D' : '#5A616B',
       pathShadow: S.sample==='pathology' ? pillShadow : 'none',
       intakeBg: S.sample==='intake' ? '#FFFFFF' : 'transparent',
-      intakeColor: S.sample==='intake' ? '#15181D' : '#8A909A',
+      intakeColor: S.sample==='intake' ? '#15181D' : '#5A616B',
       intakeShadow: S.sample==='intake' ? pillShadow : 'none',
       setPath: ()=> this.setState(s=> s.sample==='pathology' ? null : { sample:'pathology' }, ()=> this.reload()),
       setIntake: ()=> this.setState(s=> s.sample==='intake' ? null : { sample:'intake' }, ()=> this.reload()),
@@ -568,10 +625,10 @@ SMOKING STATUS: Former smoker, quit 2015.`;
       countsText: footer.countsText, modelChip: footer.model, cost: footer.cost, latency: footer.latency, pv: footer.pv, sv: footer.sv,
       evalRows: ev.evalRows, macroF1: ev.macroF1, halluc: ev.halluc, routing: ev.routing, goldCount: ev.goldCount,
       extBg: S.view==='extraction' ? '#FFFFFF' : 'transparent',
-      extColor: S.view==='extraction' ? '#15181D' : '#8A909A',
+      extColor: S.view==='extraction' ? '#15181D' : '#5A616B',
       extShadow: S.view==='extraction' ? pillShadow : 'none',
       evalBg: S.view==='eval' ? '#FFFFFF' : 'transparent',
-      evalColor: S.view==='eval' ? '#15181D' : '#8A909A',
+      evalColor: S.view==='eval' ? '#15181D' : '#5A616B',
       evalShadow: S.view==='eval' ? pillShadow : 'none',
       jsonLabel: S.showJSON ? 'Hide JSON' : 'JSON',
       caughtLabel: S.showCaught ? 'Hide caught' : 'Show caught hallucination',

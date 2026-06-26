@@ -136,12 +136,18 @@ def _ground_one(name: str, field: Field, text: str) -> GroundedField:
     model_value = field.value if flag == "not_grounded" else None
     # Confidence is 0 for every null-value branch (JS leaves `conf` at its 0 init there).
     confidence = sconf if field.value is not None else 0.0
+    # Offsets follow the *match*, not the value: a ``not_assessed`` field is null yet its cited
+    # absence span ("Margins not assessed …") DID ground, so it keeps its offsets — that drives the
+    # cyan cited-absence wash in the UI money demo (Beat 3) and restores parity with the JS
+    # `grounded()`, which keeps ``s``/``e`` for not_assessed. ``match.char_start`` is already
+    # ``None`` whenever the span didn't ground (``not_found``, ``not_grounded``), so those null
+    # branches stay offset-less with no special case.
     return GroundedField(
         name=name,
         value=value,
         source_span=span,
-        char_start=match.char_start if value is not None else None,
-        char_end=match.char_end if value is not None else None,
+        char_start=match.char_start,
+        char_end=match.char_end,
         match_quality=match.match_quality,
         confidence=confidence,
         flag=flag,

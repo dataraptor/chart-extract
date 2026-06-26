@@ -1,0 +1,17 @@
+{
+  "name": "chartextract-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ChartExtract web UI + its Playwright e2e / a11y / responsive suite (Split 08) and the map.js/api.js node tests (Split 07).",
+  "type": "commonjs",
+  "scripts": {
+    "test:unit": "node --test tests/map.test.js tests/api.test.js",
+    "e2e": "node tests/run-e2e.mjs",
+    "e2e:install": "playwright install chromium",
+    "e2e:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
+    "@playwright/test": "^1.61.1"
+  }
+}
