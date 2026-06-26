@@ -1,0 +1,6 @@
+{
+  "id": "discharge_00_pneumonia",
+  "doc_type": "discharge",
+  "split": "tuning",
+  "doc": "discharge_00_pneumonia.txt"
+}

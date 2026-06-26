@@ -1,0 +1,44 @@
+{
+  "id": "path_01_idc_grade3",
+  "doc_type": "pathology",
+  "split": "tuning",
+  "doc": "path_01_idc_grade3.txt",
+  "labels": {
+    "specimen": {
+      "value": "Right breast lumpectomy",
+      "span": "Right breast lumpectomy"
+    },
+    "diagnosis": {
+      "value": "Invasive ductal carcinoma",
+      "span": "Invasive ductal carcinoma, grade 3"
+    },
+    "grade": {
+      "value": "3",
+      "span": "grade 3"
+    },
+    "tumor_size_cm": {
+      "value": "22 mm",
+      "span": "Tumor size 22 mm"
+    },
+    "er_status": {
+      "value": "negative",
+      "span": "ER negative"
+    },
+    "pr_status": {
+      "value": "negative",
+      "span": "PR negative"
+    },
+    "her2_status": {
+      "value": "HER2+",
+      "span": "HER2 positive (3+ by IHC)"
+    },
+    "margin_status": {
+      "value": "negative",
+      "span": "Margins negative (closest 2 mm)"
+    },
+    "lymph_nodes_positive": {
+      "value": "3",
+      "span": "3 of 12 axillary nodes positive"
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "id": "path_08_papillary",
+  "doc_type": "pathology",
+  "split": "tuning",
+  "doc": "path_08_papillary.txt",
+  "labels": {
+    "specimen": {
+      "value": "Left breast excisional biopsy",
+      "span": "Left breast excisional biopsy"
+    },
+    "diagnosis": {
+      "value": "Encapsulated papillary carcinoma",
+      "span": "Encapsulated papillary carcinoma, grade 1"
+    },
+    "grade": {
+      "value": "1",
+      "span": "grade 1"
+    },
+    "tumor_size_cm": {
+      "value": "2.0 cm",
+      "span": "Tumor size 2.0 cm"
+    },
+    "er_status": {
+      "value": "positive",
+      "span": "ER positive (85%)"
+    },
+    "pr_status": {
+      "value": "positive",
+      "span": "PR positive (75%)"
+    },
+    "her2_status": {
+      "value": "negative",
+      "span": "HER2 negative"
+    },
+    "margin_status": {
+      "value": "negative",
+      "span": "Margins negative."
+    },
+    "lymph_nodes_positive": {
+      "value": "1",
+      "span": "1 of 1 node positive (micrometastasis)"
+    }
+  }
+}

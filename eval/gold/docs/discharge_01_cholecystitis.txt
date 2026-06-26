@@ -1,0 +1,14 @@
+DISCHARGE SUMMARY
+Admission: 2026-06-01   Discharge: 2026-06-05
+
+PATIENT: (synthetic record, no PHI)
+
+HOSPITAL COURSE:
+Admitted with acute cholecystitis; underwent laparoscopic
+cholecystectomy on hospital day 2 without complication.
+
+DISCHARGE DIAGNOSIS: Acute cholecystitis, status post
+laparoscopic cholecystectomy.
+
+DISCHARGE INSTRUCTIONS: Activity as tolerated; wound care
+reviewed. Return for fever or increasing abdominal pain.

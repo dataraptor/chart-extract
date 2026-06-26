@@ -1,0 +1,33 @@
+{
+  "id": "intake_04_minimal",
+  "doc_type": "intake",
+  "split": "held_out",
+  "doc": "intake_04_minimal.txt",
+  "labels": {
+    "patient_name": {
+      "value": "Sara Lindqvist",
+      "span": "PATIENT: Sara Lindqvist"
+    },
+    "dob": {
+      "value": "1995-08-23",
+      "span": "DOB: 1995-08-23"
+    },
+    "sex": {
+      "value": "Female",
+      "span": "Sex: Female"
+    },
+    "chief_complaint": {
+      "empty": "not_assessed",
+      "cite": "No acute complaints at this visit."
+    },
+    "medications": {
+      "empty": "not_found"
+    },
+    "allergies": {
+      "empty": "not_found"
+    },
+    "pcp": {
+      "empty": "not_found"
+    }
+  }
+}

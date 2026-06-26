@@ -1,0 +1,43 @@
+{
+  "id": "path_00_worked_example",
+  "doc_type": "pathology",
+  "split": "tuning",
+  "doc": "path_00_worked_example.txt",
+  "labels": {
+    "specimen": {
+      "value": "Left breast core biopsy",
+      "span": "Left breast core biopsy"
+    },
+    "diagnosis": {
+      "value": "Invasive ductal carcinoma",
+      "span": "Invasive ductal carcinoma, grade 2"
+    },
+    "grade": {
+      "value": "2",
+      "span": "grade 2"
+    },
+    "tumor_size_cm": {
+      "value": "1.4 cm",
+      "span": "Tumor size 1.4 cm"
+    },
+    "er_status": {
+      "value": "ER+",
+      "span": "ER positive (90%)"
+    },
+    "pr_status": {
+      "value": "positive",
+      "span": "PR positive (40%)"
+    },
+    "her2_status": {
+      "value": "negative",
+      "span": "HER2 negative"
+    },
+    "margin_status": {
+      "empty": "not_assessed",
+      "cite": "Margins not assessed on this specimen"
+    },
+    "lymph_nodes_positive": {
+      "empty": "not_found"
+    }
+  }
+}

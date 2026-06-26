@@ -1,0 +1,15 @@
+PATIENT INTAKE FORM
+Date: 2026-06-11          MRN: 0091277
+
+PATIENT: Robert Lang        DOB: 1958-09-02
+Sex: Male                Phone: (555) 0199
+
+CHIEF COMPLAINT: Worsening lower back pain.
+
+MEDICATIONS:
+- Amlodipine 5 mg daily
+- Omeprazole 20 mg daily
+
+ALLERGIES: No known drug allergies.
+
+PRIMARY CARE PHYSICIAN: Dr. Helen Park.

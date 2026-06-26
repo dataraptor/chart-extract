@@ -1,0 +1,43 @@
+{
+  "id": "path_07_idc_equivocal",
+  "doc_type": "pathology",
+  "split": "tuning",
+  "doc": "path_07_idc_equivocal.txt",
+  "labels": {
+    "specimen": {
+      "value": "Right breast core needle biopsy",
+      "span": "Right breast core needle biopsy"
+    },
+    "diagnosis": {
+      "value": "Invasive ductal carcinoma",
+      "span": "Invasive ductal carcinoma, grade 2"
+    },
+    "grade": {
+      "value": "2",
+      "span": "grade 2"
+    },
+    "tumor_size_cm": {
+      "value": "17 mm",
+      "span": "Tumor size 17 mm"
+    },
+    "er_status": {
+      "value": "positive",
+      "span": "ER positive (70%)"
+    },
+    "pr_status": {
+      "empty": "not_assessed",
+      "cite": "PR result deferred pending controls."
+    },
+    "her2_status": {
+      "value": "equivocal",
+      "span": "HER2 equivocal (2+)"
+    },
+    "margin_status": {
+      "value": "negative",
+      "span": "Margins negative."
+    },
+    "lymph_nodes_positive": {
+      "empty": "not_found"
+    }
+  }
+}

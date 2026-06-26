@@ -1,0 +1,14 @@
+PATIENT INTAKE FORM
+Date: 2026-06-14          MRN: 0072910
+
+PATIENT: Maria Gonzalez      DOB: 1986-12-19
+Sex: Female              Phone: (555) 0173
+
+CHIEF COMPLAINT: Migraine headaches, increasing frequency.
+
+MEDICATIONS:
+- Sumatriptan 50 mg as needed
+
+ALLERGIES: Sulfa drugs (hives). Latex (contact rash).
+
+PRIMARY CARE PHYSICIAN: Dr. Alan Whitfield.

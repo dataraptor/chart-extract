@@ -1,0 +1,44 @@
+{
+  "id": "path_02_lobular",
+  "doc_type": "pathology",
+  "split": "tuning",
+  "doc": "path_02_lobular.txt",
+  "labels": {
+    "specimen": {
+      "value": "Left breast mastectomy",
+      "span": "Left breast mastectomy"
+    },
+    "diagnosis": {
+      "value": "Invasive lobular carcinoma",
+      "span": "Invasive lobular carcinoma, grade 2"
+    },
+    "grade": {
+      "value": "2",
+      "span": "grade 2"
+    },
+    "tumor_size_cm": {
+      "value": "3.1 cm",
+      "span": "Tumor size 3.1 cm"
+    },
+    "er_status": {
+      "value": "negative",
+      "span": "ER negative (5%)"
+    },
+    "pr_status": {
+      "value": "negative",
+      "span": "PR negative (2%)"
+    },
+    "her2_status": {
+      "empty": "not_assessed",
+      "cite": "HER2 status pending; repeat testing requested."
+    },
+    "margin_status": {
+      "value": "negative",
+      "span": "Margins negative."
+    },
+    "lymph_nodes_positive": {
+      "value": "0",
+      "span": "0 of 8 nodes"
+    }
+  }
+}

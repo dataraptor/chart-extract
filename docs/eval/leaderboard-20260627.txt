@@ -1,0 +1,36 @@
+==============================================================================
+ CHARTEXTRACT EVAL  |  frozen gold set  |  15 docs  |  N=1 runs
+ prompt v3  |  normalize v1  |  provider stub  |  20260627
+==============================================================================
+  MACRO-F1            1.00 +/- 0.00
+  HALLUCINATION-RATE  0.00  (0 hallucinated / 22 null-gold fields)  <<< 0 across the frozen set
+
+  Field                   Prec  Recall    F1   distribution
+  specimen                1.00    1.00  1.00   ##########
+  diagnosis               1.00    1.00  1.00   ##########
+  grade                   1.00    1.00  1.00   ##########
+  tumor_size_cm           1.00    1.00  1.00   ##########
+  er_status               1.00    1.00  1.00   ##########
+  pr_status               1.00    1.00  1.00   ##########
+  her2_status             1.00    1.00  1.00   ##########
+  margin_status           1.00    1.00  1.00   ##########
+  lymph_nodes_positive    1.00    1.00  1.00   ##########
+  patient_name            1.00    1.00  1.00   ##########
+  dob                     1.00    1.00  1.00   ##########
+  sex                     1.00    1.00  1.00   ##########
+  chief_complaint         1.00    1.00  1.00   ##########
+  medications             1.00    1.00  1.00   ##########
+  allergies               1.00    1.00  1.00   ##########
+  pcp                     1.00    1.00  1.00   ##########
+
+  Routing accuracy  1.00   (17 docs incl. routing-only discharge)
+  Empty-kind agreement  1.00   (not_found vs not_assessed labelled correctly)
+
+  -- cost comparison (per doc) --
+  claude-opus-4-8      $0.0105/doc
+  claude-sonnet-4-6    $0.0063/doc   (down 40% cost, estimate)
+  measured this run    $0.0105/doc  (provider stub)
+  latency  mean 0.000s  max 0.000s  (n=15)
+
+  (i) 15 synthetic docs - report F1 with wide intervals; not real PHI.
+==============================================================================

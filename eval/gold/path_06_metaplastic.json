@@ -1,0 +1,44 @@
+{
+  "id": "path_06_metaplastic",
+  "doc_type": "pathology",
+  "split": "held_out",
+  "doc": "path_06_metaplastic.txt",
+  "labels": {
+    "specimen": {
+      "value": "Left breast modified radical mastectomy",
+      "span": "Left breast modified radical mastectomy"
+    },
+    "diagnosis": {
+      "value": "Metaplastic carcinoma",
+      "span": "Metaplastic carcinoma, grade 3"
+    },
+    "grade": {
+      "value": "3",
+      "span": "grade 3"
+    },
+    "tumor_size_cm": {
+      "value": "4.2 cm",
+      "span": "Tumor size 4.2 cm"
+    },
+    "er_status": {
+      "value": "negative",
+      "span": "ER negative"
+    },
+    "pr_status": {
+      "value": "negative",
+      "span": "PR negative"
+    },
+    "her2_status": {
+      "value": "negative",
+      "span": "HER2 negative"
+    },
+    "margin_status": {
+      "empty": "not_assessed",
+      "cite": "Margin assessment not possible due to fragmentation."
+    },
+    "lymph_nodes_positive": {
+      "value": "4",
+      "span": "4 of 15 nodes positive"
+    }
+  }
+}

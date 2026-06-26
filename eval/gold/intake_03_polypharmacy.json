@@ -1,0 +1,63 @@
+{
+  "id": "intake_03_polypharmacy",
+  "doc_type": "intake",
+  "split": "held_out",
+  "doc": "intake_03_polypharmacy.txt",
+  "labels": {
+    "patient_name": {
+      "value": "George Okafor",
+      "span": "PATIENT: George Okafor"
+    },
+    "dob": {
+      "value": "1949-04-07",
+      "span": "DOB: 1949-04-07"
+    },
+    "sex": {
+      "value": "Male",
+      "span": "Sex: Male"
+    },
+    "chief_complaint": {
+      "value": "Routine follow-up for multiple chronic conditions",
+      "span": "Routine follow-up for multiple chronic conditions."
+    },
+    "medications": [
+      {
+        "value": "Metformin 1000 mg twice daily",
+        "span": "Metformin 1000 mg twice daily"
+      },
+      {
+        "value": "Lisinopril 20 mg daily",
+        "span": "Lisinopril 20 mg daily"
+      },
+      {
+        "value": "Atorvastatin 40 mg nightly",
+        "span": "Atorvastatin 40 mg nightly"
+      },
+      {
+        "value": "Aspirin 81 mg daily",
+        "span": "Aspirin 81 mg daily"
+      },
+      {
+        "value": "Levothyroxine 75 mcg daily",
+        "span": "Levothyroxine 75 mcg daily"
+      }
+    ],
+    "allergies": [
+      {
+        "value": "Codeine",
+        "span": "Codeine (nausea)"
+      },
+      {
+        "value": "Iodine contrast",
+        "span": "Iodine contrast (hives)"
+      },
+      {
+        "value": "Shellfish",
+        "span": "Shellfish."
+      }
+    ],
+    "pcp": {
+      "empty": "not_found"
+    }
+  }
+}

@@ -1,0 +1,7 @@
+PATIENT INTAKE FORM
+Date: 2026-06-17          MRN: 0050881
+
+PATIENT: Sara Lindqvist        DOB: 1995-08-23
+Sex: Female              Phone: (555) 0150
+
+No medications reported. No acute complaints at this visit.

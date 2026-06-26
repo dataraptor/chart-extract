@@ -1,0 +1,44 @@
+{
+  "id": "path_04_mucinous",
+  "doc_type": "pathology",
+  "split": "tuning",
+  "doc": "path_04_mucinous.txt",
+  "labels": {
+    "specimen": {
+      "value": "Left breast partial mastectomy",
+      "span": "Left breast partial mastectomy"
+    },
+    "diagnosis": {
+      "value": "Mucinous (colloid) carcinoma",
+      "span": "Mucinous (colloid) carcinoma, grade 1"
+    },
+    "grade": {
+      "value": "1",
+      "span": "grade 1"
+    },
+    "tumor_size_cm": {
+      "value": "2.5 cm",
+      "span": "Tumor size 2.5 cm"
+    },
+    "er_status": {
+      "value": "positive",
+      "span": "ER positive (95%)"
+    },
+    "pr_status": {
+      "empty": "not_assessed",
+      "cite": "PR status deferred to addendum."
+    },
+    "her2_status": {
+      "value": "negative",
+      "span": "HER2 negative by IHC"
+    },
+    "margin_status": {
+      "value": "negative",
+      "span": "Margins negative."
+    },
+    "lymph_nodes_positive": {
+      "value": "1",
+      "span": "1 of 2 nodes positive"
+    }
+  }
+}

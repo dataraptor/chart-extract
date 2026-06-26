@@ -1,0 +1,42 @@
+{
+  "id": "path_03_dcis",
+  "doc_type": "pathology",
+  "split": "tuning",
+  "doc": "path_03_dcis.txt",
+  "labels": {
+    "specimen": {
+      "value": "Right breast excision",
+      "span": "Right breast excision"
+    },
+    "diagnosis": {
+      "value": "Ductal carcinoma in situ",
+      "span": "Ductal carcinoma in situ (DCIS)"
+    },
+    "grade": {
+      "value": "2",
+      "span": "nuclear grade 2"
+    },
+    "tumor_size_cm": {
+      "value": "1.8 cm",
+      "span": "Span of DCIS 1.8 cm"
+    },
+    "er_status": {
+      "value": "ER+",
+      "span": "ER positive (80%)"
+    },
+    "pr_status": {
+      "value": "PR+",
+      "span": "PR positive (60%)"
+    },
+    "her2_status": {
+      "empty": "not_found"
+    },
+    "margin_status": {
+      "value": "positive",
+      "span": "Margins involved (positive)"
+    },
+    "lymph_nodes_positive": {
+      "empty": "not_found"
+    }
+  }
+}

@@ -1,0 +1,16 @@
+PATIENT INTAKE FORM
+Date: 2026-06-16          MRN: 0065002
+
+PATIENT: George Okafor        DOB: 1949-04-07
+Sex: Male                Phone: (555) 0124
+
+CHIEF COMPLAINT: Routine follow-up for multiple chronic conditions.
+
+MEDICATIONS:
+- Metformin 1000 mg twice daily
+- Lisinopril 20 mg daily
+- Atorvastatin 40 mg nightly
+- Aspirin 81 mg daily
+- Levothyroxine 75 mcg daily
+
+ALLERGIES: Codeine (nausea). Iodine contrast (hives). Shellfish.

@@ -1,0 +1,47 @@
+{
+  "id": "intake_00_form",
+  "doc_type": "intake",
+  "split": "tuning",
+  "doc": "intake_00_form.txt",
+  "labels": {
+    "patient_name": {
+      "value": "Jane Doe",
+      "span": "PATIENT: Jane Doe"
+    },
+    "dob": {
+      "value": "1971-03-14",
+      "span": "DOB: 1971-03-14"
+    },
+    "sex": {
+      "value": "Female",
+      "span": "Sex: Female"
+    },
+    "chief_complaint": {
+      "value": "Persistent cough",
+      "span": "Persistent cough, 3 weeks"
+    },
+    "medications": [
+      {
+        "value": "Lisinopril 10 mg daily",
+        "span": "Lisinopril 10 mg daily"
+      },
+      {
+        "value": "Metformin 500 mg twice daily",
+        "span": "Metformin 500 mg twice daily"
+      },
+      {
+        "value": "Atorvastatin 20 mg nightly",
+        "span": "Atorvastatin 20 mg nightly"
+      }
+    ],
+    "allergies": [
+      {
+        "value": "Penicillin",
+        "span": "Penicillin (rash)"
+      }
+    ],
+    "pcp": {
+      "empty": "not_found"
+    }
+  }
+}

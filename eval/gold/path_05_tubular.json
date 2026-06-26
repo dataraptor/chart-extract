@@ -1,0 +1,44 @@
+{
+  "id": "path_05_tubular",
+  "doc_type": "pathology",
+  "split": "held_out",
+  "doc": "path_05_tubular.txt",
+  "labels": {
+    "specimen": {
+      "value": "Right breast needle localization excision",
+      "span": "Right breast needle localization excision"
+    },
+    "diagnosis": {
+      "value": "Tubular carcinoma",
+      "span": "Tubular carcinoma, grade 1"
+    },
+    "grade": {
+      "value": "1",
+      "span": "grade 1"
+    },
+    "tumor_size_cm": {
+      "value": "8 mm",
+      "span": "Tumor size 8 mm"
+    },
+    "er_status": {
+      "value": "positive",
+      "span": "ER positive (99%)"
+    },
+    "pr_status": {
+      "value": "positive",
+      "span": "PR positive (90%)"
+    },
+    "her2_status": {
+      "value": "negative",
+      "span": "HER2 negative"
+    },
+    "margin_status": {
+      "value": "negative",
+      "span": "Margins negative (widely clear)"
+    },
+    "lymph_nodes_positive": {
+      "value": "0",
+      "span": "0 of 3 sentinel nodes positive"
+    }
+  }
+}

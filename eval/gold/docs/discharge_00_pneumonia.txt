@@ -1,0 +1,14 @@
+DISCHARGE SUMMARY
+Admission: 2026-05-02   Discharge: 2026-05-09
+
+PATIENT: (synthetic record, no PHI)
+
+HOSPITAL COURSE:
+The patient was admitted for community-acquired pneumonia and
+treated with IV antibiotics, transitioned to oral on day 4.
+
+DISCHARGE DIAGNOSIS: Community-acquired pneumonia, resolving.
+
+DISCHARGE MEDICATIONS: Amoxicillin-clavulanate, 7-day course.
+
+FOLLOW-UP: Primary care in 1 week; chest X-ray in 6 weeks.

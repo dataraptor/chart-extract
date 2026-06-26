@@ -1,0 +1,39 @@
+{
+  "id": "path_09_sparse",
+  "doc_type": "pathology",
+  "split": "tuning",
+  "doc": "path_09_sparse.txt",
+  "labels": {
+    "specimen": {
+      "value": "Right breast skin punch biopsy",
+      "span": "Right breast skin punch biopsy"
+    },
+    "diagnosis": {
+      "value": "Invasive ductal carcinoma",
+      "span": "Invasive ductal carcinoma, grade 2"
+    },
+    "grade": {
+      "value": "2",
+      "span": "grade 2"
+    },
+    "tumor_size_cm": {
+      "empty": "not_found"
+    },
+    "er_status": {
+      "empty": "not_found"
+    },
+    "pr_status": {
+      "empty": "not_found"
+    },
+    "her2_status": {
+      "empty": "not_found"
+    },
+    "margin_status": {
+      "empty": "not_assessed",
+      "cite": "Additional prognostic and margin studies were not performed on this limited sample."
+    },
+    "lymph_nodes_positive": {
+      "empty": "not_found"
+    }
+  }
+}

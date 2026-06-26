@@ -1,0 +1,44 @@
+{
+  "id": "intake_02_migraine",
+  "doc_type": "intake",
+  "split": "tuning",
+  "doc": "intake_02_migraine.txt",
+  "labels": {
+    "patient_name": {
+      "value": "Maria Gonzalez",
+      "span": "PATIENT: Maria Gonzalez"
+    },
+    "dob": {
+      "value": "1986-12-19",
+      "span": "DOB: 1986-12-19"
+    },
+    "sex": {
+      "value": "Female",
+      "span": "Sex: Female"
+    },
+    "chief_complaint": {
+      "value": "Migraine headaches, increasing frequency",
+      "span": "Migraine headaches, increasing frequency."
+    },
+    "medications": [
+      {
+        "value": "Sumatriptan 50 mg as needed",
+        "span": "Sumatriptan 50 mg as needed"
+      }
+    ],
+    "allergies": [
+      {
+        "value": "Sulfa drugs",
+        "span": "Sulfa drugs (hives)"
+      },
+      {
+        "value": "Latex",
+        "span": "Latex (contact rash)"
+      }
+    ],
+    "pcp": {
+      "value": "Dr. Alan Whitfield",
+      "span": "PRIMARY CARE PHYSICIAN: Dr. Alan Whitfield."
+    }
+  }
+}

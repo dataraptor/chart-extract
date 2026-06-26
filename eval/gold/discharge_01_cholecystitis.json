@@ -1,0 +1,6 @@
+{
+  "id": "discharge_01_cholecystitis",
+  "doc_type": "discharge",
+  "split": "held_out",
+  "doc": "discharge_01_cholecystitis.txt"
+}

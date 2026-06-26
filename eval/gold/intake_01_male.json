@@ -1,0 +1,41 @@
+{
+  "id": "intake_01_male",
+  "doc_type": "intake",
+  "split": "tuning",
+  "doc": "intake_01_male.txt",
+  "labels": {
+    "patient_name": {
+      "value": "Robert Lang",
+      "span": "PATIENT: Robert Lang"
+    },
+    "dob": {
+      "value": "1958-09-02",
+      "span": "DOB: 1958-09-02"
+    },
+    "sex": {
+      "value": "Male",
+      "span": "Sex: Male"
+    },
+    "chief_complaint": {
+      "value": "Worsening lower back pain",
+      "span": "Worsening lower back pain."
+    },
+    "medications": [
+      {
+        "value": "Amlodipine 5 mg daily",
+        "span": "Amlodipine 5 mg daily"
+      },
+      {
+        "value": "Omeprazole 20 mg daily",
+        "span": "Omeprazole 20 mg daily"
+      }
+    ],
+    "allergies": {
+      "empty": "not_found"
+    },
+    "pcp": {
+      "value": "Dr. Helen Park",
+      "span": "PRIMARY CARE PHYSICIAN: Dr. Helen Park."
+    }
+  }
+}
