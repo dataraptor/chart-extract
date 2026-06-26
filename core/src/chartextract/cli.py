@@ -1,14 +1,14 @@
 """ChartExtract CLI — ``chartextract extract <doc> [--schema ...] [--json]`` (spec §5).
 
-Runs the offline pipeline and prints the field table (name · value · flag · confidence) plus the
-footer counts and the priced ``$/doc`` / latency caption — or the full :class:`ExtractionResult`
-JSON with ``--json``. Offline by default: with no ``ANTHROPIC_API_KEY`` set it drives the
-:class:`StubProvider`, so ``chartextract extract examples/path_report.txt`` reproduces the §5
-worked example with no network. The live Anthropic provider is selected by key presence in
-Split 04 (see :func:`_make_provider`).
+Runs the pipeline and prints the field table (name · value · flag · confidence) plus the footer
+counts and the priced ``$/doc`` / latency caption — or the full :class:`ExtractionResult` JSON with
+``--json``. The live Azure-OpenAI **GPT-5.5** provider is used when a key is configured
+(``AZURE_OPENAI_API_KEY`` / ``OPENAI_API_KEY``); otherwise — or with ``--stub`` — it drives the
+:class:`StubProvider`, so ``chartextract extract examples/path_report.txt`` reproduces the §5 worked
+example with no network. A one-line note on stderr always says which mode ran.
 
 Errors are surfaced honestly, never a traceback: an unresolved doc type exits ``2`` with a
-"pass --schema" hint; a missing key (once live extraction exists) exits ``3``.
+"pass --schema" hint; a missing key exits ``3``.
 """
 
 from __future__ import annotations
@@ -19,6 +19,7 @@ import sys
 from . import __version__
 from .load import load
 from .pipeline import extract
+from .provider import default_provider, live_key_present
 from .provider.base import MissingAPIKeyError, ProviderClient, ProviderError
 from .provider.stub import StubProvider, stub_for_intake, stub_for_path_report
 from .router import UnknownDocTypeError
@@ -40,20 +41,36 @@ def _offline_guess_key(text: str) -> str:
     return "unknown"
 
 
-def _make_provider(text: str, schema: str | None) -> ProviderClient:
-    """Pick the provider. Split 04 selects Anthropic when a key is present; until then, the stub.
+def _stub_provider(text: str, schema: str | None) -> ProviderClient:
+    """Build the offline stub, preloaded to match the resolved doc type so the demo round-trips.
 
-    The stub is preloaded to match the resolved doc type so the offline demo round-trips: an
-    explicit ``--schema`` selects the canned output directly; otherwise a header-keyword guess does.
+    An explicit ``--schema`` selects the canned output directly; otherwise a header-keyword guess
+    does. ``unknown`` returns a bare stub so the router surfaces the "pick a schema" path.
     """
-    # Split 04: `if os.environ.get("ANTHROPIC_API_KEY"): return AnthropicProvider(...)`.
     key = schema or _offline_guess_key(text)
     if key == "intake":
         return stub_for_intake()
     if key == "unknown":
-        # No canned type → the router surfaces UnknownDocTypeError (the "pick a schema" path).
         return StubProvider(classify_result=("unknown", 0.0))
     return stub_for_path_report()
+
+
+def _make_provider(text: str, schema: str | None, *, use_stub: bool) -> ProviderClient:
+    """Pick the provider: live GPT-5.5 when a key is configured, else the offline stub.
+
+    ``--stub`` (``use_stub``) forces offline even with a key. A note is printed to stderr so the
+    user always knows whether the numbers came from a live model or canned data.
+    """
+    if not use_stub and live_key_present():
+        try:
+            provider = default_provider()
+        except MissingAPIKeyError:  # pragma: no cover - live_key_present already gated this
+            pass
+        else:
+            print(f"running live: {provider.provider}/{provider.model}", file=sys.stderr)
+            return provider
+    print("running offline: stub provider (canned data, $0)", file=sys.stderr)
+    return _stub_provider(text, schema)
 
 
 def _format_result(result: ExtractionResult) -> str:
@@ -83,7 +100,7 @@ def _format_result(result: ExtractionResult) -> str:
 def _cmd_extract(args: argparse.Namespace) -> int:
     # Load once to guess the type for the offline provider, then run the full pipeline on the path.
     loaded = load(args.doc)
-    provider = _make_provider(loaded.text, args.schema)
+    provider = _make_provider(loaded.text, args.schema, use_stub=args.stub)
     result = extract(args.doc, schema=args.schema, provider=provider)
     if args.json:
         print(result.model_dump_json(indent=2))
@@ -107,6 +124,11 @@ def _build_parser() -> argparse.ArgumentParser:
         help="force a schema (pathology|intake); omit to route automatically",
     )
     e.add_argument("--json", action="store_true", help="print the full ExtractionResult as JSON")
+    e.add_argument(
+        "--stub",
+        action="store_true",
+        help="force the offline stub provider even when a live API key is configured",
+    )
     e.set_defaults(func=_cmd_extract)
     return parser
 

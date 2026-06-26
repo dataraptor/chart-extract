@@ -15,7 +15,7 @@ declared so all splits import one definition.
 
 from __future__ import annotations
 
-from typing import Generic, Literal, TypeVar
+from typing import Any, Generic, Literal, TypeVar
 
 from pydantic import BaseModel, ConfigDict
 
@@ -182,6 +182,64 @@ class ExtractionResult(BaseModel):
     fields, but every ``char_start``/``char_end`` is ``None`` and the UI shows a "highlight
     unavailable" banner (Split 09) instead of faking offsets. Mirrors ``LoadedDoc.has_text_layer``.
     """
+
+
+# ---------------------------------------------------------------------------
+# Provider-ready strict JSON schema (used by the live provider seam, Split 04).
+# ---------------------------------------------------------------------------
+
+
+def _collapse_nullable(node: dict[str, Any]) -> None:
+    """Rewrite a Pydantic ``anyOf`` null-union into the canonical ``type: [..., "null"]`` form.
+
+    Pydantic emits a nullable scalar field as ``{"anyOf": [{"type": "string"}, {"type": "null"}]}``.
+    Strict structured-output mode accepts both, but the explicit type-union form
+    (``"type": ["string", "null"]``) reads cleaner. Only a pure union of bare ``{"type": <scalar>}``
+    members is collapsed; an ``anyOf`` carrying anything else (an ``enum`` member, a ``$ref``, a
+    nested object) is left untouched — strict mode accepts ``anyOf`` for those.
+    """
+    members = node.get("anyOf")
+    if not isinstance(members, list) or not members:
+        return
+    types: list[str] = []
+    for sub in members:
+        if not isinstance(sub, dict):
+            return
+        if set(sub.keys()) - {"title", "description"} != {"type"} or not isinstance(
+            sub["type"], str
+        ):
+            return
+        types.append(sub["type"])
+    node.pop("anyOf")
+    node["type"] = types if len(types) > 1 else types[0]
+
+
+def strict_json_schema(model: type[BaseModel]) -> dict[str, Any]:
+    """Return ``model``'s JSON schema in provider strict-mode shape.
+
+    Recursively, for every object node: every property is forced into ``required`` and
+    ``additionalProperties`` is set to ``false``; ``default`` keys are stripped (strict mode
+    rejects them); pure-scalar nullable ``anyOf`` unions are collapsed to ``type: [..., "null"]``
+    so a nullable field is a *required key that may be null*, never an omitted one. This is what
+    makes the model return ``value: null`` (not a hallucinated value) for an absent field.
+    """
+    schema = model.model_json_schema()
+
+    def _walk(node: Any) -> None:
+        if isinstance(node, dict):
+            node.pop("default", None)
+            _collapse_nullable(node)
+            if node.get("type") == "object" and "properties" in node:
+                node["additionalProperties"] = False
+                node["required"] = list(node["properties"].keys())
+            for value in node.values():
+                _walk(value)
+        elif isinstance(node, list):
+            for item in node:
+                _walk(item)
+
+    _walk(schema)
+    return schema
 
 
 def field_names(schema: type[BaseModel]) -> list[str]:

@@ -16,9 +16,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# The Anthropic SDK is introduced in Split 04; declared here so the dependency set is
-# honest and `pip install -e core/[providers]` works ahead of time.
+# Live provider SDKs (Split 04). The realized live backend is Azure OpenAI GPT-5.5
+# (`provider/openai.py`); the Anthropic SDK is kept as the spec's reference provider.
+# `pip install -e core/[providers]` pulls both so the seam is honest either way.
 providers = [
+    "openai>=1.40",
     "anthropic>=0.40",
 ]
 dev = [

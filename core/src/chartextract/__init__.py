@@ -10,6 +10,9 @@ network are involved at this layer.
 Split 03 wires it all into the end-to-end **pipeline** (`extract`) over a **provider seam**
 (`ProviderClient` + the no-network `StubProvider`) with **routing** (`route`), **prompts**
 (`PROMPT_VERSION`), and **cost** (`Usage`, `price`) — runnable entirely offline.
+
+Split 04 adds the **live** backend (`OpenAIProvider` — Azure OpenAI GPT-5.5) selected by
+`default_provider()` when a key is configured; the same `extract()` now runs live or on the stub.
 """
 
 from __future__ import annotations
@@ -27,6 +30,7 @@ from .grounding import SpanMatch, ground, ground_fields
 from .load import LoadedDoc, load
 from .pipeline import extract
 from .prompts import PROMPT_VERSION
+from .provider import default_provider, live_key_present
 from .provider.base import (
     MissingAPIKeyError,
     ProviderClient,
@@ -46,6 +50,7 @@ from .schemas import (
     ListField,
     PathologySchema,
     field_names,
+    strict_json_schema,
 )
 
 __version__ = "0.1.0"
@@ -63,6 +68,7 @@ __all__ = [
     "SCHEMAS",
     "SCHEMA_VERSION",
     "field_names",
+    "strict_json_schema",
     # Split 02 — grounding + flag engine.
     "SpanMatch",
     "ground",
@@ -89,4 +95,7 @@ __all__ = [
     "StubProvider",
     "stub_for_path_report",
     "stub_for_intake",
+    # Split 04 — live provider (Azure OpenAI GPT-5.5).
+    "default_provider",
+    "live_key_present",
 ]
