@@ -175,6 +175,13 @@ class ExtractionResult(BaseModel):
     model: str
     cost_usd: float = 0.0
     latency_s: float = 0.0
+    highlight_available: bool = True
+    """Whether character offsets are usable for highlighting.
+
+    ``False`` when the source document had no text layer (a scanned PDF): the engine still returns
+    fields, but every ``char_start``/``char_end`` is ``None`` and the UI shows a "highlight
+    unavailable" banner (Split 09) instead of faking offsets. Mirrors ``LoadedDoc.has_text_layer``.
+    """
 
 
 def field_names(schema: type[BaseModel]) -> list[str]:

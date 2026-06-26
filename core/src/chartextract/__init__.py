@@ -7,7 +7,9 @@ the **grounding + flag engine** (`ground`, `ground_fields`, `structural_confiden
 `assign_flag`) — the pure-code heart where *the model proposes and code disposes*. No model and no
 network are involved at this layer.
 
-`extract()` — the end-to-end pipeline — is added in Split 03.
+Split 03 wires it all into the end-to-end **pipeline** (`extract`) over a **provider seam**
+(`ProviderClient` + the no-network `StubProvider`) with **routing** (`route`), **prompts**
+(`PROMPT_VERSION`), and **cost** (`Usage`, `price`) — runnable entirely offline.
 """
 
 from __future__ import annotations
@@ -20,8 +22,20 @@ from .confidence import (
     nonspace_len,
     structural_confidence,
 )
+from .cost import PRICING, Usage, price
 from .grounding import SpanMatch, ground, ground_fields
 from .load import LoadedDoc, load
+from .pipeline import extract
+from .prompts import PROMPT_VERSION
+from .provider.base import (
+    MissingAPIKeyError,
+    ProviderClient,
+    ProviderError,
+    RefusalError,
+    TruncatedError,
+)
+from .provider.stub import StubProvider, stub_for_intake, stub_for_path_report
+from .router import UnknownDocTypeError, route
 from .schemas import (
     SCHEMA_VERSION,
     SCHEMAS,
@@ -33,8 +47,6 @@ from .schemas import (
     PathologySchema,
     field_names,
 )
-
-# extract() is added in Split 03 (load → route → parse → ground → assemble).
 
 __version__ = "0.1.0"
 
@@ -61,4 +73,20 @@ __all__ = [
     "TAU",
     "MATCH_WEIGHT",
     "AMBIG_MAX_NONSPACE",
+    # Split 03 — pipeline, provider seam, routing, prompts, cost.
+    "extract",
+    "route",
+    "UnknownDocTypeError",
+    "PROMPT_VERSION",
+    "Usage",
+    "price",
+    "PRICING",
+    "ProviderClient",
+    "ProviderError",
+    "MissingAPIKeyError",
+    "RefusalError",
+    "TruncatedError",
+    "StubProvider",
+    "stub_for_path_report",
+    "stub_for_intake",
 ]
