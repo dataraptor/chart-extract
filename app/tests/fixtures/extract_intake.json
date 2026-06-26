@@ -1,0 +1,114 @@
+{
+  "doc_type": "intake",
+  "fields": [
+    {
+      "name": "patient_name",
+      "value": "Jane Doe",
+      "source_span": "PATIENT: Jane Doe",
+      "char_start": 60,
+      "char_end": 77,
+      "match_quality": "exact",
+      "confidence": 0.97,
+      "flag": null,
+      "model_value": null
+    },
+    {
+      "name": "dob",
+      "value": "1971-03-14",
+      "source_span": "DOB: 1971-03-14",
+      "char_start": 85,
+      "char_end": 100,
+      "match_quality": "exact",
+      "confidence": 0.96,
+      "flag": null,
+      "model_value": null
+    },
+    {
+      "name": "sex",
+      "value": "female",
+      "source_span": "Sex: Female",
+      "char_start": 101,
+      "char_end": 112,
+      "match_quality": "exact",
+      "confidence": 0.95,
+      "flag": null,
+      "model_value": null
+    },
+    {
+      "name": "chief_complaint",
+      "value": "Persistent cough",
+      "source_span": "Persistent cough, 3 weeks",
+      "char_start": 162,
+      "char_end": 187,
+      "match_quality": "exact",
+      "confidence": 0.55,
+      "flag": "needs_review",
+      "model_value": null
+    },
+    {
+      "name": "medications[0]",
+      "value": "Lisinopril 10 mg daily",
+      "source_span": "Lisinopril 10 mg daily",
+      "char_start": 205,
+      "char_end": 227,
+      "match_quality": "exact",
+      "confidence": 0.95,
+      "flag": null,
+      "model_value": null
+    },
+    {
+      "name": "medications[1]",
+      "value": "Metformin 500 mg twice daily",
+      "source_span": "Metformin 500 mg twice daily",
+      "char_start": 230,
+      "char_end": 258,
+      "match_quality": "exact",
+      "confidence": 0.94,
+      "flag": null,
+      "model_value": null
+    },
+    {
+      "name": "medications[2]",
+      "value": "Atorvastatin 20 mg nightly",
+      "source_span": "Atorvastatin 20 mg nightly",
+      "char_start": 261,
+      "char_end": 287,
+      "match_quality": "exact",
+      "confidence": 0.93,
+      "flag": null,
+      "model_value": null
+    },
+    {
+      "name": "allergies[0]",
+      "value": "Penicillin",
+      "source_span": "Penicillin (rash)",
+      "char_start": 300,
+      "char_end": 317,
+      "match_quality": "exact",
+      "confidence": 0.94,
+      "flag": null,
+      "model_value": null
+    },
+    {
+      "name": "pcp",
+      "value": null,
+      "source_span": "",
+      "char_start": null,
+      "char_end": null,
+      "match_quality": "none",
+      "confidence": 0.0,
+      "flag": "not_found",
+      "model_value": null
+    }
+  ],
+  "n_fields": 9,
+  "n_grounded": 8,
+  "n_null": 1,
+  "n_needs_review": 1,
+  "prompt_version": "v3",
+  "schema_version": "v2",
+  "model": "claude-opus-4-8",
+  "cost_usd": 0.0105,
+  "latency_s": 1.7999991541728377e-06,
+  "highlight_available": true
+}

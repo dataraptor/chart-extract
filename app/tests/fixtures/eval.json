@@ -1,0 +1,136 @@
+{
+  "gold_count": 15,
+  "n_runs": 1,
+  "macro_f1": 1.0,
+  "hallucination_rate": 0.0,
+  "routing_accuracy": 1.0,
+  "rows": [
+    {
+      "name": "specimen",
+      "p": 1.0,
+      "r": 1.0,
+      "f1": 1.0,
+      "note": ""
+    },
+    {
+      "name": "diagnosis",
+      "p": 1.0,
+      "r": 1.0,
+      "f1": 1.0,
+      "note": ""
+    },
+    {
+      "name": "grade",
+      "p": 1.0,
+      "r": 1.0,
+      "f1": 1.0,
+      "note": ""
+    },
+    {
+      "name": "tumor_size_cm",
+      "p": 1.0,
+      "r": 1.0,
+      "f1": 1.0,
+      "note": ""
+    },
+    {
+      "name": "er_status",
+      "p": 1.0,
+      "r": 1.0,
+      "f1": 1.0,
+      "note": ""
+    },
+    {
+      "name": "pr_status",
+      "p": 1.0,
+      "r": 1.0,
+      "f1": 1.0,
+      "note": ""
+    },
+    {
+      "name": "her2_status",
+      "p": 1.0,
+      "r": 1.0,
+      "f1": 1.0,
+      "note": ""
+    },
+    {
+      "name": "margin_status",
+      "p": 1.0,
+      "r": 1.0,
+      "f1": 1.0,
+      "note": ""
+    },
+    {
+      "name": "lymph_nodes_positive",
+      "p": 1.0,
+      "r": 1.0,
+      "f1": 1.0,
+      "note": ""
+    },
+    {
+      "name": "patient_name",
+      "p": 1.0,
+      "r": 1.0,
+      "f1": 1.0,
+      "note": ""
+    },
+    {
+      "name": "dob",
+      "p": 1.0,
+      "r": 1.0,
+      "f1": 1.0,
+      "note": ""
+    },
+    {
+      "name": "sex",
+      "p": 1.0,
+      "r": 1.0,
+      "f1": 1.0,
+      "note": ""
+    },
+    {
+      "name": "chief_complaint",
+      "p": 1.0,
+      "r": 1.0,
+      "f1": 1.0,
+      "note": ""
+    },
+    {
+      "name": "medications",
+      "p": 1.0,
+      "r": 1.0,
+      "f1": 1.0,
+      "note": ""
+    },
+    {
+      "name": "allergies",
+      "p": 1.0,
+      "r": 1.0,
+      "f1": 1.0,
+      "note": ""
+    },
+    {
+      "name": "pcp",
+      "p": 1.0,
+      "r": 1.0,
+      "f1": 1.0,
+      "note": ""
+    }
+  ],
+  "cost": [
+    {
+      "model": "claude-opus-4-8",
+      "f1": 1.0,
+      "usd_per_doc": 0.0105,
+      "delta": null
+    },
+    {
+      "model": "claude-sonnet-4-6",
+      "f1": 1.0,
+      "usd_per_doc": 0.0063,
+      "delta": 40.0
+    }
+  ],
+  "caption": "15 synthetic docs (N=1); hallucination-rate 0.00 (0 hallucinated / 22 null-gold fields); report F1 with wide intervals \u2014 not real PHI."
+}

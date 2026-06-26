@@ -1,0 +1,114 @@
+{
+  "doc_type": "pathology",
+  "fields": [
+    {
+      "name": "specimen",
+      "value": "Left breast core biopsy",
+      "source_span": "Left breast core biopsy",
+      "char_start": 179,
+      "char_end": 202,
+      "match_quality": "exact",
+      "confidence": 0.96,
+      "flag": null,
+      "model_value": null
+    },
+    {
+      "name": "diagnosis",
+      "value": "Invasive ductal carcinoma",
+      "source_span": "Invasive ductal carcinoma, grade 2",
+      "char_start": 216,
+      "char_end": 250,
+      "match_quality": "exact",
+      "confidence": 0.93,
+      "flag": null,
+      "model_value": null
+    },
+    {
+      "name": "grade",
+      "value": "2",
+      "source_span": "grade 2",
+      "char_start": 243,
+      "char_end": 250,
+      "match_quality": "exact",
+      "confidence": 0.9,
+      "flag": null,
+      "model_value": null
+    },
+    {
+      "name": "tumor_size_cm",
+      "value": 1.4,
+      "source_span": "Tumor size 1.4 cm",
+      "char_start": 252,
+      "char_end": 269,
+      "match_quality": "exact",
+      "confidence": 0.95,
+      "flag": null,
+      "model_value": null
+    },
+    {
+      "name": "er_status",
+      "value": "positive",
+      "source_span": "ER positive (90%)",
+      "char_start": 271,
+      "char_end": 288,
+      "match_quality": "exact",
+      "confidence": 0.94,
+      "flag": null,
+      "model_value": null
+    },
+    {
+      "name": "pr_status",
+      "value": "positive",
+      "source_span": "PR positive (40%)",
+      "char_start": 290,
+      "char_end": 307,
+      "match_quality": "exact",
+      "confidence": 0.92,
+      "flag": null,
+      "model_value": null
+    },
+    {
+      "name": "her2_status",
+      "value": "negative",
+      "source_span": "HER2 negative",
+      "char_start": 309,
+      "char_end": 322,
+      "match_quality": "exact",
+      "confidence": 0.93,
+      "flag": null,
+      "model_value": null
+    },
+    {
+      "name": "margin_status",
+      "value": null,
+      "source_span": "Margins not assessed on this specimen",
+      "char_start": null,
+      "char_end": null,
+      "match_quality": "exact",
+      "confidence": 0.0,
+      "flag": "not_assessed",
+      "model_value": null
+    },
+    {
+      "name": "lymph_nodes_positive",
+      "value": null,
+      "source_span": "2 of 3 axillary nodes positive",
+      "char_start": null,
+      "char_end": null,
+      "match_quality": "none",
+      "confidence": 0.0,
+      "flag": "not_grounded",
+      "model_value": 2
+    }
+  ],
+  "n_fields": 9,
+  "n_grounded": 7,
+  "n_null": 2,
+  "n_needs_review": 0,
+  "prompt_version": "v3",
+  "schema_version": "v2",
+  "model": "claude-opus-4-8",
+  "cost_usd": 0.0105,
+  "latency_s": 2.5000044843181968e-06,
+  "highlight_available": true
+}

@@ -1,0 +1,14 @@
+[
+  {
+    "id": "path_report",
+    "name": "path_report.txt",
+    "doc_type_hint": "pathology",
+    "text": "SURGICAL PATHOLOGY REPORT\nAccession No: SP-26-04417        Reported: 2026-06-22\n\nCLINICAL HISTORY: 54-year-old female, palpable mass,\nleft breast upper outer quadrant.\n\nSPECIMEN: Left breast core biopsy.\n\nDIAGNOSIS:\nInvasive ductal carcinoma, grade 2.\nTumor size 1.4 cm. ER positive (90%), PR positive (40%),\nHER2 negative.\n\nCOMMENT: Margins not assessed on this specimen.\nCorrelation with imaging is recommended."
+  },
+  {
+    "id": "intake_form",
+    "name": "intake_form.txt",
+    "doc_type_hint": "intake",
+    "text": "PATIENT INTAKE FORM\nDate: 2026-06-20          MRN: 0084213\n\nPATIENT: Jane Doe        DOB: 1971-03-14\nSex: Female              Phone: (555) 0142\n\nCHIEF COMPLAINT: Persistent cough, 3 weeks.\n\nMEDICATIONS:\n- Lisinopril 10 mg daily\n- Metformin 500 mg twice daily\n- Atorvastatin 20 mg nightly\n\nALLERGIES: Penicillin (rash). No known food allergies.\n\nSMOKING STATUS: Former smoker, quit 2015."
+  }
+]

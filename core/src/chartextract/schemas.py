@@ -51,11 +51,16 @@ class ListField(BaseModel):
 
     Each item is its own :class:`Field`, so each carries its **own** span and confidence and is
     grounded independently. Flattened at grounding time into ``name[i]`` rows (Split 02).
+
+    Items are typed ``Field[str]`` (all multi-value fields — medications, allergies, problems —
+    are string-valued). The parameter is load-bearing for the **live** provider: an unparametrized
+    ``Field`` leaves ``value`` typeless, which :func:`strict_json_schema` cannot give a JSON
+    ``type``, so Azure structured output 400s the ``response_format`` (Split 05 finding).
     """
 
     model_config = ConfigDict(extra="forbid")
 
-    items: list[Field] = []
+    items: list[Field[str]] = []
 
 
 # ---------------------------------------------------------------------------

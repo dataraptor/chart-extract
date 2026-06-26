@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<script src="./api.js"></script>
+<script src="./map.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:#FFFFFF;color:#15181D;font-family:'Schibsted Grotesk',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+  button{font-family:inherit;}
+  @keyframes ceUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+  @keyframes ceShimmer{0%{opacity:.45;}50%{opacity:.8;}100%{opacity:.45;}}
+  @keyframes ceRing{0%{box-shadow:0 0 0 0 rgba(21,145,91,.30);}100%{box-shadow:0 0 0 18px rgba(21,145,91,0);}}
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-thumb{background:#E0E3E8;border-radius:7px;border:3px solid transparent;background-clip:padding-box;}
+  ::-webkit-scrollbar-thumb:hover{background:#CFD3DA;background-clip:padding-box;}
+  ::-webkit-scrollbar-track{background:transparent;}
+</style>
+</helmet>
+<div style="height:100vh;display:flex;flex-direction:column;background:#FFFFFF;overflow:hidden;">
+
+  <header style="flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:clamp(8px,1vw,14px);padding:clamp(10px,1vw,14px) clamp(14px,2vw,26px);background:#FFFFFF;box-shadow:inset 0 -1px 0 #E8EAEE;">
+    <div style="display:flex;align-items:center;gap:11px;margin-right:auto;">
+      <div style="width:30px;height:30px;border-radius:8px;background:linear-gradient(140deg,#1C93A8 0%,#2579CE 100%);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 2px rgba(37,121,206,.30);">
+        <span style="display:block;width:11px;height:11px;border:2.2px solid rgba(255,255,255,.92);border-right-color:transparent;border-radius:50%;transform:rotate(-45deg);"></span>
+      </div>
+      <div style="display:flex;flex-direction:column;line-height:1.18;">
+        <span style="font-weight:600;font-size:15px;letter-spacing:-.015em;color:#15181D;">ChartExtract</span>
+        <span style="font-size:11px;color:#8A909A;letter-spacing:-.005em;">grounded document extraction</span>
+      </div>
+      <span style="display:flex;align-items:center;gap:7px;margin-left:8px;padding:5px 11px 5px 9px;border-radius:999px;background:#FAF3E7;box-shadow:inset 0 0 0 1px #F0E4CE;font-size:12px;color:#9A6B22;letter-spacing:-.005em;">
+        <span style="width:6px;height:6px;border-radius:50%;background:#DB7D12;"></span>synthetic data &middot; demo, not a medical device
+      </span>
+    </div>
+
+    <div style="display:flex;padding:3px;background:#F1F3F6;border-radius:9px;gap:2px;box-shadow:inset 0 0 0 1px #E8EAEE;">
+      <button onClick="{{ setPath }}" style="border:none;cursor:pointer;font-size:12.5px;font-weight:500;letter-spacing:-.01em;padding:6px 13px;border-radius:7px;background:{{ pathBg }};color:{{ pathColor }};box-shadow:{{ pathShadow }};transition:all 150ms ease;">Pathology</button>
+      <button onClick="{{ setIntake }}" style="border:none;cursor:pointer;font-size:12.5px;font-weight:500;letter-spacing:-.01em;padding:6px 13px;border-radius:7px;background:{{ intakeBg }};color:{{ intakeColor }};box-shadow:{{ intakeShadow }};transition:all 150ms ease;">Intake</button>
+    </div>
+
+    <div style="display:flex;padding:3px;background:#F1F3F6;border-radius:9px;gap:2px;box-shadow:inset 0 0 0 1px #E8EAEE;">
+      <button onClick="{{ goExtraction }}" style="border:none;cursor:pointer;font-size:12.5px;font-weight:500;letter-spacing:-.01em;padding:6px 14px;border-radius:7px;background:{{ extBg }};color:{{ extColor }};box-shadow:{{ extShadow }};transition:all 150ms ease;">Extraction</button>
+      <button onClick="{{ goEval }}" style="border:none;cursor:pointer;font-size:12.5px;font-weight:500;letter-spacing:-.01em;padding:6px 14px;border-radius:7px;background:{{ evalBg }};color:{{ evalColor }};box-shadow:{{ evalShadow }};transition:all 150ms ease;">Eval</button>
+    </div>
+
+    <span style="display:flex;align-items:center;gap:7px;padding:6px 11px;border-radius:8px;background:#F1F3F6;box-shadow:inset 0 0 0 1px #E8EAEE;font-family:'JetBrains Mono',monospace;font-size:12px;color:#545B66;">
+      <span style="width:6px;height:6px;border-radius:50%;background:#3975EE;"></span>{{ modelChip }}
+    </span>
+    <span style="display:flex;align-items:center;padding:6px 11px;border-radius:8px;background:#E7F4EC;box-shadow:inset 0 0 0 1px rgba(21,145,91,.20);font-family:'JetBrains Mono',monospace;font-size:12px;color:#15915B;">{{ cost }}/run</span>
+
+    <button onClick="{{ rerun }}" title="Re-run extraction" style="display:flex;align-items:center;justify-content:center;width:33px;height:33px;border:none;cursor:pointer;font-size:15px;color:#545B66;background:#FFFFFF;border-radius:8px;box-shadow:inset 0 0 0 1px #E2E5EA;transition:all 150ms ease;" style-hover="color:#15181D;box-shadow:inset 0 0 0 1px #CFD3DA;background:#F6F7F9;">&#8635;</button>
+  </header>
+
+  <sc-if value="{{ isExtraction }}" hint-placeholder-val="{{ true }}">
+  <div style="flex:1;min-height:0;display:flex;">
+    <div style="flex:1;min-height:0;display:flex;flex-wrap:wrap;background:#FFFFFF;overflow:hidden;">
+
+      <section style="flex:1 1 360px;min-width:300px;min-height:0;display:flex;flex-direction:column;background:#FAFBFC;box-shadow:inset -1px 0 0 #E8EAEE;">
+        <header style="flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:clamp(13px,1.2vw,17px) clamp(14px,2vw,26px);box-shadow:inset 0 -1px 0 #E8EAEE;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#A6ABB3;text-transform:uppercase;">Source &middot; {{ docFile }}</span>
+          <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:#15915B;font-weight:500;"><span style="width:6px;height:6px;border-radius:50%;background:#15915B;"></span>text-layer ready</span>
+        </header>
+        <div id="ce-doc" style="flex:1;min-height:0;padding:clamp(16px,1.6vw,26px) clamp(14px,2vw,26px);overflow:auto;">
+          {{ documentBody }}
+        </div>
+      </section>
+
+      <section style="flex:1 1 380px;min-width:320px;min-height:0;display:flex;flex-direction:column;background:#FFFFFF;">
+        <header style="flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:clamp(13px,1.2vw,17px) clamp(14px,2vw,26px);box-shadow:inset 0 -1px 0 #E8EAEE;">
+          <span style="display:flex;align-items:center;gap:9px;min-width:0;">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#A6ABB3;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Extraction &middot; {{ schemaName }}</span>
+            <span style="flex:none;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.04em;color:#2A6FD0;background:#EEF4FD;padding:3px 7px;border-radius:6px;">routed auto 0.92</span>
+          </span>
+          <span style="display:flex;gap:7px;flex:none;">
+            <sc-if value="{{ isPath }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ toggleCaught }}" style="border:none;cursor:pointer;font-size:11.5px;font-weight:500;letter-spacing:-.01em;color:{{ caughtColor }};background:{{ caughtBg }};padding:6px 11px;border-radius:8px;box-shadow:{{ caughtShadow }};transition:all 150ms ease;">{{ caughtLabel }}</button>
+            </sc-if>
+            <button onClick="{{ toggleJSON }}" style="border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#545B66;background:#F1F3F6;padding:6px 11px;border-radius:8px;box-shadow:inset 0 0 0 1px #E8EAEE;transition:all 150ms ease;">{{ jsonLabel }}</button>
+          </span>
+        </header>
+        <div style="flex:1;min-height:0;overflow:auto;">
+          <sc-for list="{{ fields }}" as="field" hint-placeholder-count="7">
+            <div onMouseEnter="{{ field.onEnter }}" onMouseLeave="{{ field.onLeave }}" onClick="{{ field.onClick }}" style="display:flex;flex-direction:column;gap:6px;padding:clamp(12px,1.05vw,16px) clamp(14px,2vw,26px);box-shadow:inset 3px 0 0 {{ field.barColor }},inset 0 -1px 0 #EDEFF2;background:{{ field.rowBg }};cursor:pointer;transition:background 150ms ease;">
+              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:14px;">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:clamp(11.5px,.85vw,12.5px);color:#8A909A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ field.name }}</span>
+                <span style="font-size:clamp(14px,1vw,15.5px);font-weight:500;letter-spacing:-.01em;color:{{ field.valueColor }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;">{{ field.valueDisplay }}</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;">
+                <span style="font-size:clamp(11.5px,.85vw,12.5px);color:#9AA0A8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">{{ field.detail }}</span>
+                <span style="display:flex;align-items:center;gap:10px;flex:none;">
+                  <sc-if value="{{ field.showStatus }}" hint-placeholder-val="{{ false }}">
+                    <span style="font-size:11px;font-weight:500;color:{{ field.barColor }};letter-spacing:-.005em;background:{{ field.statusBg }};padding:2px 8px;border-radius:6px;">{{ field.statusLabel }}</span>
+                  </sc-if>
+                  <sc-if value="{{ field.grounded }}" hint-placeholder-val="{{ true }}">
+                    <span style="display:flex;align-items:center;gap:8px;">
+                      <span style="position:relative;width:clamp(40px,5vw,68px);height:4px;background:#ECEEF1;border-radius:999px;overflow:hidden;">
+                        <span style="position:absolute;left:0;top:0;bottom:0;width:{{ field.confPct }};background:{{ field.confColor }};border-radius:999px;transition:width .42s cubic-bezier(.22,.61,.36,1);"></span>
+                      </span>
+                      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#8A909A;font-variant-numeric:tabular-nums;">{{ field.confText }}</span>
+                    </span>
+                  </sc-if>
+                </span>
+              </div>
+            </div>
+          </sc-for>
+
+          <sc-if value="{{ hasGhosts }}" hint-placeholder-val="{{ false }}">
+            <sc-for list="{{ ghosts }}" as="g" hint-placeholder-count="0">
+              <div style="display:flex;flex-direction:column;gap:9px;padding:clamp(12px,1.05vw,16px) clamp(14px,2vw,26px);box-shadow:inset 3px 0 0 #E8EAEE,inset 0 -1px 0 #EDEFF2;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#B6BBC2;animation:ceShimmer 1.3s ease infinite;">{{ g.name }}</span>
+                  <span style="width:58px;height:10px;border-radius:5px;background:#EEF0F3;animation:ceShimmer 1.3s ease infinite;"></span>
+                </div>
+                <span style="width:42%;height:7px;border-radius:4px;background:#F2F4F6;animation:ceShimmer 1.3s ease infinite;"></span>
+              </div>
+            </sc-for>
+          </sc-if>
+
+          <sc-if value="{{ showJSON }}" hint-placeholder-val="{{ false }}">
+            <pre style="margin:0;padding:clamp(16px,1.6vw,24px) clamp(14px,2vw,26px);background:#F8F9FB;box-shadow:inset 0 1px 0 #E8EAEE;font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.65;color:#545B66;overflow:auto;white-space:pre;">{{ jsonText }}</pre>
+          </sc-if>
+        </div>
+      </section>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isEval }}" hint-placeholder-val="{{ false }}">
+  <div style="flex:1;min-height:0;padding:clamp(14px,2vw,34px);overflow:auto;">
+    <div style="max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:clamp(14px,1.6vw,22px);">
+
+      <div style="display:flex;flex-wrap:wrap;gap:clamp(12px,1.4vw,18px);">
+        <div style="flex:1 1 200px;background:#FFFFFF;border-radius:13px;padding:clamp(18px,1.7vw,24px);box-shadow:inset 0 0 0 1px #E8EAEE;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#A6ABB3;text-transform:uppercase;margin-bottom:13px;">Macro-F1</div>
+          <div style="font-size:clamp(32px,3.2vw,46px);font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:#15181D;line-height:1;">{{ macroF1 }}</div>
+          <div style="font-size:12px;color:#8A909A;margin-top:9px;">frozen gold &middot; {{ goldCount }} docs &middot; N=5 runs</div>
+        </div>
+        <div style="flex:1 1 200px;background:#FFFFFF;border-radius:13px;padding:clamp(18px,1.7vw,24px);box-shadow:inset 0 0 0 1px rgba(21,145,91,.28);animation:ceRing 1.8s ease 1;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#15915B;text-transform:uppercase;margin-bottom:13px;">Hallucination rate</div>
+          <div style="font-size:clamp(32px,3.2vw,46px);font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:#15915B;line-height:1;">{{ halluc }}</div>
+          <div style="font-size:12px;color:#8A909A;margin-top:9px;">0 invented values across the set</div>
+        </div>
+        <div style="flex:1 1 180px;background:#FFFFFF;border-radius:13px;padding:clamp(18px,1.7vw,24px);box-shadow:inset 0 0 0 1px #E8EAEE;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#A6ABB3;text-transform:uppercase;margin-bottom:13px;">Routing acc</div>
+          <div style="font-size:clamp(32px,3.2vw,46px);font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:#15181D;line-height:1;">{{ routing }}</div>
+          <div style="font-size:12px;color:#8A909A;margin-top:9px;">doc-type classifier</div>
+        </div>
+      </div>
+
+      <div style="background:#FFFFFF;border-radius:13px;overflow:hidden;box-shadow:inset 0 0 0 1px #E8EAEE;">
+        <div style="display:grid;grid-template-columns:1.6fr .6fr .6fr .6fr 1.5fr;gap:12px;padding:clamp(13px,1.2vw,18px) clamp(18px,1.7vw,26px);box-shadow:inset 0 -1px 0 #E8EAEE;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#A6ABB3;">
+          <span>Field</span><span style="text-align:right;">Prec</span><span style="text-align:right;">Recall</span><span style="text-align:right;">F1</span><span style="padding-left:14px;">Distribution</span>
+        </div>
+        <sc-for list="{{ evalRows }}" as="r" hint-placeholder-count="9">
+          <div style="display:grid;grid-template-columns:1.6fr .6fr .6fr .6fr 1.5fr;gap:12px;align-items:center;padding:clamp(10px,.95vw,14px) clamp(18px,1.7vw,26px);box-shadow:inset 0 -1px 0 #EDEFF2;">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#545B66;overflow:hidden;text-overflow:ellipsis;">{{ r.name }}<span style="color:#A6ABB3;"> {{ r.note }}</span></span>
+            <span style="text-align:right;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#8A909A;font-variant-numeric:tabular-nums;">{{ r.p }}</span>
+            <span style="text-align:right;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#8A909A;font-variant-numeric:tabular-nums;">{{ r.r }}</span>
+            <span style="text-align:right;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#15181D;font-variant-numeric:tabular-nums;">{{ r.f1 }}</span>
+            <span style="display:flex;align-items:center;padding-left:14px;"><span style="height:5px;border-radius:999px;background:#15915B;width:{{ r.w }};transition:width .5s ease;"></span></span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="background:#FFFFFF;border-radius:13px;padding:clamp(18px,1.7vw,24px);box-shadow:inset 0 0 0 1px #E8EAEE;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#A6ABB3;margin-bottom:15px;">Cost &times; accuracy</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;padding-bottom:14px;box-shadow:inset 0 -1px 0 #EDEFF2;">
+          <span style="font-size:14px;font-weight:500;letter-spacing:-.01em;color:#15181D;">Opus 4.8 <span style="color:#A6ABB3;font-size:11.5px;font-weight:400;">headline</span></span>
+          <span style="display:flex;gap:22px;font-family:'JetBrains Mono',monospace;font-size:13px;"><span style="color:#8A909A;">F1 0.94</span><span style="color:#15181D;">$0.021/doc</span></span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;padding-top:14px;">
+          <span style="font-size:14px;font-weight:500;letter-spacing:-.01em;color:#15181D;">Sonnet 4.6 <span style="color:#A6ABB3;font-size:11.5px;font-weight:400;">cost row</span></span>
+          <span style="display:flex;gap:22px;font-family:'JetBrains Mono',monospace;font-size:13px;"><span style="color:#8A909A;">F1 0.90</span><span style="color:#15181D;">$0.011/doc</span><span style="color:#15915B;">&darr;48%</span></span>
+        </div>
+      </div>
+
+      <span style="font-size:12px;color:#9AA0A8;line-height:1.65;max-width:680px;">{{ goldCount }} synthetic documents &mdash; report F1 with wide confidence intervals on this small gold set. Synthetic or public documents only, never real PHI.</span>
+    </div>
+  </div>
+  </sc-if>
+
+  <footer style="flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:clamp(10px,1.3vw,20px);padding:10px clamp(14px,2vw,26px);background:#FFFFFF;box-shadow:inset 0 1px 0 #E8EAEE;font-size:clamp(11px,.85vw,12.5px);">
+    <span style="color:#545B66;font-weight:500;letter-spacing:-.01em;">{{ countsText }}</span>
+    <span style="margin-left:auto;display:flex;flex-wrap:wrap;align-items:center;gap:clamp(10px,1.3vw,18px);font-family:'JetBrains Mono',monospace;color:#8A909A;font-size:11.5px;">
+      <span>{{ latency }}</span>
+      <span style="color:#A6ABB3;">{{ pv }} &middot; {{ sv }}</span>
+      <span style="color:#B6BBC2;">synthetic demo &middot; not a real service</span>
+    </span>
+  </footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:780},&quot;streamMs&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:380,&quot;min&quot;:120,&quot;max&quot;:700,&quot;step&quot;:20,&quot;unit&quot;:&quot;ms&quot;,&quot;section&quot;:&quot;Demo&quot;,&quot;tsType&quot;:&quot;number&quot;},&quot;autoDemo&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;section&quot;:&quot;Demo&quot;,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  // Split 07: `mode` is 'live' (default — real extractions fetched from the Split 06 API served at
+  // the same origin) or 'stub' (the inline canned data + JS grounded() below — today's standalone
+  // behavior, used when `?stub=1` is set or the API is unreachable). `result` holds the live
+  // ExtractionResult; everything the UI shows derives from it via window.ChartExtractMap.
+  state = { view:'extraction', sample:'pathology', revealed:0, streaming:false, done:false, active:null, pinned:[], showJSON:false, showCaught:false,
+            mode:null, result:null, docText:'', samples:[], evalReport:null, loading:true, apiError:null };
+
+  FLAGS = {
+    accepted:{c:'#15915B',bg:'#E7F4EC',label:'accepted'},
+    needs_review:{c:'#B07520',bg:'#FAF1E3',label:'needs review'},
+    ambiguous_span:{c:'#B07520',bg:'#FAF1E3',label:'ambiguous'},
+    not_assessed:{c:'#1593AB',bg:'#E4F4F7',label:'not assessed'},
+    not_found:{c:'#8A909A',bg:'#F1F3F6',label:'not found'},
+    not_grounded:{c:'#CB4A45',bg:'#FBECEB',label:'not grounded'},
+  };
+
+  TEXT = `SURGICAL PATHOLOGY REPORT
+Accession No: SP-26-04417        Reported: 2026-06-22
+
+CLINICAL HISTORY: 54-year-old female, palpable mass,
+left breast upper outer quadrant.
+
+SPECIMEN: Left breast core biopsy.
+
+DIAGNOSIS:
+Invasive ductal carcinoma, grade 2.
+Tumor size 1.4 cm. ER positive (90%), PR positive (40%),
+HER2 negative.
+
+COMMENT: Margins not assessed on this specimen.
+Correlation with imaging is recommended.`;
+
+  TEXT_INTAKE = `PATIENT INTAKE FORM
+Date: 2026-06-20          MRN: 0084213
+
+PATIENT: Jane Doe        DOB: 1971-03-14
+Sex: Female              Phone: (555) 0142
+
+CHIEF COMPLAINT: Persistent cough, 3 weeks.
+
+MEDICATIONS:
+- Lisinopril 10 mg daily
+- Metformin 500 mg twice daily
+- Atorvastatin 20 mg nightly
+
+ALLERGIES: Penicillin (rash). No known food allergies.
+
+SMOKING STATUS: Former smoker, quit 2015.`;
+
+  // In live mode the document text comes from the fetched sample (the canonical load() output the
+  // engine's offsets index into); the inline TEXT/TEXT_INTAKE are the stub/scripted-illustration
+  // fallback (and the source for the "show caught hallucination" demo, which is path-only).
+  text(){
+    if(this.state.mode === 'live' && this.state.result && !this.state.showCaught) return this.state.docText || '';
+    return this.state.sample === 'intake' ? this.TEXT_INTAKE : this.TEXT;
+  }
+
+  componentDidMount(){ this.api = window.ChartExtractAPI; this.boot(); }
+  componentWillUnmount(){ clearInterval(this._t); clearInterval(this._demo); }
+
+  // Decide live vs stub once, then start. Live is the default; `?stub=1` or an unreachable API
+  // (health() resolving to {ok:false}) falls back to the inline canned behavior so the .dc.html
+  // still opens standalone with no backend.
+  boot(){
+    const forceStub = (typeof location !== 'undefined') && /[?&]stub=1\b/.test(location.search || '');
+    if(forceStub || !this.api){ this.setState({ mode:'stub', loading:false }, ()=> this.run()); return; }
+    this.api.health().then(h=>{
+      if(!h || h.ok === false){ this.setState({ mode:'stub', loading:false }, ()=> this.run()); return; }
+      this.api.samples().then(s=>{
+        const list = (s && s.ok === false) ? [] : (s || []);
+        this.setState({ mode:'live', samples:list }, ()=> this.extractCurrent());
+      });
+    });
+  }
+
+  sampleId(){ return this.state.sample === 'intake' ? 'intake_form' : 'path_report'; }
+  sampleText(id){ const s = (this.state.samples || []).find(x=>x.id === id); return s ? s.text : ''; }
+
+  // Live: fetch a real extraction for the selected sample, then run the existing staged reveal over
+  // the fetched fields. An error envelope is surfaced calmly (apiError) — never a crash (Split 09
+  // builds the full per-type notices).
+  extractCurrent(){
+    clearInterval(this._t); clearInterval(this._demo);
+    const id = this.sampleId();
+    const schema = this.state.sample === 'intake' ? 'intake' : 'pathology';
+    const docText = this.sampleText(id);
+    this.setState({ loading:true, apiError:null, result:null, revealed:0, streaming:false, done:false, active:null, pinned:[], showJSON:false, docText });
+    this.api.extract({ sampleId:id, schema }).then(r=>{
+      if(!r || r.ok === false){ this.setState({ loading:false, apiError:(r && r.error) || { message:'Extraction failed.' } }); return; }
+      this.setState({ result:r, docText, loading:false }, ()=> this.runReveal());
+    });
+  }
+
+  // Re-extract (live) or re-stream (stub / scripted caught demo).
+  reload(){ if(this.state.mode === 'live' && !this.state.showCaught) this.extractCurrent(); else this.runReveal(); }
+  run(){ this.runReveal(); }
+
+  // The staged reveal — unchanged cadence, now over the real (or scripted) grounded rows.
+  runReveal(){
+    clearInterval(this._t); clearInterval(this._demo);
+    const ms = Math.max(80, this.props.streamMs ?? 380);
+    const total = this.grounded().length;
+    this.setState({ streaming:true, revealed:0, done:false, active:null, pinned:[] });
+    if(total === 0){ this.setState({ streaming:false, done:true }); return; }
+    this._t = setInterval(()=>{
+      this.setState(s=>{
+        const n = s.revealed + 1;
+        if(n >= total){ clearInterval(this._t); return { revealed:total, streaming:false, done:true }; }
+        return { revealed:n };
+      });
+    }, ms);
+    if(this.props.autoDemo){
+      const stopAt = total*ms + 700;
+      setTimeout(()=>this.startDemo(), stopAt);
+    }
+  }
+
+  // Lazily fetch the eval leaderboard the first time the Eval view is opened (live only).
+  loadEval(){
+    if(this.state.mode !== 'live' || this.state.evalReport || this._evalLoading || !this.api) return;
+    this._evalLoading = true;
+    this.api.evalReport().then(r=>{ this._evalLoading = false; if(r && r.ok !== false) this.setState({ evalReport:r }); });
+  }
+
+  startDemo(){
+    clearInterval(this._demo);
+    const seq = ['tumor_size_cm','er_status','margin_status','lymph_nodes_positive'];
+    let i = 0;
+    this._demo = setInterval(()=>{ this.setState({ active: seq[i % seq.length] }); i++; }, 1600);
+  }
+
+  componentDidUpdate(prevProps, prevState){
+    const prevActive = prevState ? prevState.active : this._lastActive;
+    if(prevActive !== this.state.active && this.state.active) this.scrollToActive();
+    this._lastActive = this.state.active;
+  }
+  scrollToActive(){
+    try{
+      const p = document.getElementById('ce-doc');
+      const m = document.getElementById('ce-mark-active');
+      if(p && m){ const pr=p.getBoundingClientRect(), mr=m.getBoundingClientRect();
+        p.scrollTop += (mr.top - pr.top) - pr.height/2 + mr.height/2; }
+    }catch(e){}
+  }
+
+  hexA(h,a){ const n=parseInt(h.slice(1),16); return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`; }
+
+  defs(){
+    return this.state.sample === 'intake' ? this.intakeDefs() : this.pathDefs();
+  }
+
+  intakeDefs(){
+    return [
+      { name:'patient_name', value:'Jane Doe', span:'PATIENT: Jane Doe', mc:0.97 },
+      { name:'dob', value:'1971-03-14', span:'DOB: 1971-03-14', mc:0.96 },
+      { name:'sex', value:'Female', span:'Sex: Female', mc:0.95 },
+      { name:'chief_complaint', value:'Persistent cough', span:'Persistent cough, 3 weeks', mc:0.55 },
+      { name:'medications[0]', value:'Lisinopril 10 mg daily', span:'Lisinopril 10 mg daily', mc:0.95 },
+      { name:'medications[1]', value:'Metformin 500 mg twice daily', span:'Metformin 500 mg twice daily', mc:0.94 },
+      { name:'medications[2]', value:'Atorvastatin 20 mg nightly', span:'Atorvastatin 20 mg nightly', mc:0.93 },
+      { name:'allergies[0]', value:'Penicillin', span:'Penicillin (rash)', mc:0.94 },
+      { name:'pcp', value:null, span:'', mc:0 },
+    ];
+  }
+
+  pathDefs(){
+    const c = this.state.showCaught;
+    return [
+      { name:'specimen', value:'Left breast core biopsy', span:'Left breast core biopsy', mc:0.96 },
+      { name:'diagnosis', value:'Invasive ductal carcinoma', span:'Invasive ductal carcinoma, grade 2', mc:0.93 },
+      { name:'grade', value:'2', span:'grade 2', mc:0.9 },
+      { name:'tumor_size_cm', value:'1.4 cm', span:'Tumor size 1.4 cm', mc:0.95 },
+      { name:'er_status', value:'positive', span:'ER positive (90%)', mc:0.94 },
+      { name:'pr_status', value:'positive', span:'PR positive (40%)', mc:0.92 },
+      { name:'her2_status', value:'negative', span:'HER2 negative', mc:0.93 },
+      { name:'margin_status', value:null, span:'Margins not assessed on this specimen', mc:0 },
+      c
+        ? { name:'lymph_nodes_positive', value:2, proposed:2, span:'2 of 3 axillary nodes positive', mc:0.71 }
+        : { name:'lymph_nodes_positive', value:null, span:'', mc:0 },
+    ];
+  }
+
+  ground(span, text){
+    if(!span) return { q:'none', s:null, e:null, count:0 };
+    const i = text.indexOf(span);
+    if(i !== -1){ const count = text.split(span).length - 1; return { q:'exact', s:i, e:i+span.length, count }; }
+    const esc = x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const toks = span.trim().split(/\s+/).map(esc);
+    try{ const re = new RegExp(toks.join('\\s+')); const m = re.exec(text); if(m) return { q:'whitespace', s:m.index, e:m.index+m[0].length, count:1 }; }catch(e){}
+    const pre = span.replace(/\s+/g,' ').slice(0,40);
+    const j = text.indexOf(pre); if(j !== -1) return { q:'prefix', s:j, e:j+pre.length, count:1 };
+    return { q:'none', s:null, e:null, count:0 };
+  }
+
+  // Live mode → the engine's grounded fields, mapped 1:1 (offsets/flags/confidence consumed as
+  // returned, never re-derived here). Stub / scripted-caught mode → the JS reference below.
+  grounded(){
+    if(this.state.mode === 'live' && this.state.result && !this.state.showCaught){
+      return window.ChartExtractMap.toFieldRows(this.state.result);
+    }
+    return this.scriptedGrounded();
+  }
+
+  scriptedGrounded(){
+    const text = this.text(), tau = 0.6;
+    return this.defs().map(f=>{
+      const g = this.ground(f.span, text);
+      let flag, value = f.value, conf = 0;
+      if(value != null){
+        if(g.q === 'none'){ flag='not_grounded'; value=null; conf=0; }
+        else {
+          const w = { exact:1, whitespace:0.92, prefix:0.5 }[g.q];
+          conf = Math.min(f.mc, w);
+          if(g.count > 1 && f.span.replace(/\s/g,'').length < 12) flag='ambiguous_span';
+          else if(conf < tau || g.q === 'prefix') flag='needs_review';
+          else flag='accepted';
+        }
+      } else {
+        if(!f.span) flag='not_found';
+        else if(g.q !== 'none') flag='not_assessed';
+        else flag='not_found';
+      }
+      return { ...f, ...g, flag, value, conf };
+    });
+  }
+
+  jsonText(gf){
+    const obj = {
+      doc_type: this.state.sample, model:'claude-opus-4-8', prompt_version:'v3', schema_version:'v2',
+      cost_usd:0.021, latency_s:3.4,
+      n_fields:gf.length,
+      n_grounded:gf.filter(f=>f.value!=null).length,
+      n_null:gf.filter(f=>f.value==null).length,
+      n_needs_review:gf.filter(f=>['needs_review','ambiguous_span'].includes(f.flag)).length,
+      fields: gf.map(f=>({
+        name:f.name, value:f.value, source_span:f.span||'',
+        char_start:f.s, char_end:f.e, match_quality:f.q,
+        confidence:Number((f.conf||0).toFixed(2)),
+        flag: f.flag==='accepted' ? null : f.flag,
+      })),
+    };
+    return JSON.stringify(obj, null, 2);
+  }
+
+  docBody(gf, active){
+    const text = this.text();
+    const activeName = this.state.active;
+    // Live: highlight positions come from the engine's char_start/char_end via the mapper (never
+    // re-grounded in JS). Stub/scripted: from the JS grounded rows. Same downstream wash/glow logic.
+    const live = this.state.mode === 'live' && this.state.result && !this.state.showCaught;
+    const base = live
+      ? window.ChartExtractMap.toHighlightRanges(this.state.result)
+      : gf.filter(f=>f.s != null).map(f=>({ name:f.name, s:f.s, e:f.e, flag:f.flag }));
+    const ranges = [];
+    base.forEach(r=>{ if(active.has(r.name)) ranges.push({ s:r.s, e:r.e, c:this.FLAGS[r.flag].c, isActive:r.name===activeName, amb:r.flag==='ambiguous_span' }); });
+    ranges.sort((a,b)=>a.s-b.s);
+    const nodes=[]; let cur=0, k=0;
+    ranges.forEach(r=>{
+      if(r.s < cur) return;
+      if(r.s > cur) nodes.push(text.slice(cur, r.s));
+      nodes.push(React.createElement('mark', {
+        key:k++, id: r.isActive ? 'ce-mark-active' : undefined,
+        style:{ background:this.hexA(r.c,0.14), boxShadow:'inset 3px 0 0 '+r.c+(r.isActive?', 0 0 0 1px '+this.hexA(r.c,0.42):''), borderRadius:'3px',
+          padding:'1px 4px', margin:'0 -1px', color:'#15181D',
+          textDecoration: r.amb ? 'underline dotted '+r.c : 'none',
+          transition:'background 220ms ease' },
+      }, text.slice(r.s, r.e)));
+      cur = r.e;
+    });
+    if(cur < text.length) nodes.push(text.slice(cur));
+    return React.createElement('pre', {
+      style:{ whiteSpace:'pre-wrap', wordBreak:'break-word', margin:0,
+        fontFamily:"'JetBrains Mono', ui-monospace, monospace",
+        fontSize:'clamp(12px,0.92vw,13.5px)', lineHeight:1.95, color:'#545B66' },
+    }, nodes);
+  }
+
+  renderVals(){
+    const S = this.state;
+    const gf = this.grounded();
+    const active = new Set([...(S.pinned||[]), S.active].filter(Boolean));
+    const confColor = c => c>=0.8 ? '#15915B' : c>=0.6 ? '#B07520' : '#8A909A';
+    const pillShadow = '0 1px 2px rgba(16,24,40,.10),inset 0 0 0 1px rgba(16,24,40,.02)';
+
+    const all = gf.map(f=>{
+      const fl = this.FLAGS[f.flag];
+      const isNull = f.value == null;
+      let detail;
+      if(f.flag==='not_found') detail = 'document is silent \u2014 null by design';
+      else if(f.flag==='not_assessed') detail = 'cites \u201C'+f.span+'\u201D';
+      else if(f.flag==='not_grounded') detail = 'model proposed \u201C'+f.proposed+'\u201D \u00B7 span not located';
+      else detail = '\u201C'+f.span+'\u201D \u00B7 '+f.q + (f.flag==='ambiguous_span' && f.count ? ' \u00B7 1 of '+f.count : '');
+      return {
+        name:f.name,
+        valueDisplay: isNull ? '\u2014' : String(f.value),
+        valueColor: isNull ? '#B6BBC2' : '#15181D',
+        barColor: fl.c,
+        statusBg: fl.bg,
+        showStatus: f.flag !== 'accepted',
+        statusLabel: fl.label,
+        rowBg: active.has(f.name) ? '#F4F6F9' : 'transparent',
+        detail, grounded: !isNull,
+        confPct: Math.round((f.conf||0)*100)+'%',
+        confText: f.conf ? f.conf.toFixed(2) : '',
+        confColor: confColor(f.conf||0),
+        onEnter: ()=> this.setState({ active:f.name }),
+        onLeave: ()=> this.setState(s=> s.active===f.name ? { active:null } : null),
+        onClick: ()=> this.setState(s=>{ const p=new Set(s.pinned); p.has(f.name)?p.delete(f.name):p.add(f.name); return { pinned:[...p], active:f.name }; }),
+      };
+    });
+
+    const nF = gf.filter(f=>f.flag==='not_found').length;
+    const nA = gf.filter(f=>f.flag==='not_assessed').length;
+    const nG = gf.filter(f=>f.flag==='not_grounded').length;
+    const grounded = gf.filter(f=>f.value!=null).length;
+    const nulls = gf.filter(f=>f.value==null).length;
+    const review = gf.filter(f=>['needs_review','ambiguous_span'].includes(f.flag)).length;
+    const countsText = `${grounded} grounded \u00B7 ${nulls} null (${nF} not_found \u00B7 ${nA} not_assessed${nG?` \u00B7 ${nG} not_grounded`:''})${review?` \u00B7 ${review} review`:''}`;
+
+    const scriptedEvalRows = [
+      { name:'specimen', p:'0.98', r:'0.97', f1:'0.97', w:'97%', note:'' },
+      { name:'diagnosis', p:'0.95', r:'0.93', f1:'0.94', w:'94%', note:'' },
+      { name:'grade', p:'0.93', r:'0.95', f1:'0.94', w:'94%', note:'' },
+      { name:'tumor_size_cm', p:'0.96', r:'0.96', f1:'0.96', w:'96%', note:'' },
+      { name:'er_status', p:'0.97', r:'0.95', f1:'0.96', w:'96%', note:'' },
+      { name:'pr_status', p:'0.94', r:'0.92', f1:'0.93', w:'93%', note:'' },
+      { name:'her2_status', p:'0.98', r:'0.97', f1:'0.97', w:'97%', note:'' },
+      { name:'margin_status', p:'1.00', r:'1.00', f1:'1.00', w:'100%', note:'not_assessed' },
+      { name:'lymph_nodes_positive', p:'1.00', r:'1.00', f1:'1.00', w:'100%', note:'not_found' },
+    ];
+
+    // Live mode draws the footer / JSON / eval from the engine result (via the pure mapper); stub
+    // and scripted-caught mode keep today's computed/canned values.
+    const live = S.mode==='live' && S.result && !S.showCaught;
+    const footer = live
+      ? window.ChartExtractMap.toFooterCounts(S.result)
+      : { countsText, cost:'$0.021', latency:'3.4s', pv:'prompt v3', sv:'schema v2', model:'claude-opus-4-8' };
+    const jsonText = live ? window.ChartExtractMap.toJsonText(S.result) : this.jsonText(gf);
+    const ev = S.evalReport
+      ? window.ChartExtractMap.toEvalView(S.evalReport)
+      : { macroF1:'0.95', halluc:'0', routing:'0.95', goldCount:19, evalRows:scriptedEvalRows };
+    const documentBody = S.apiError ? this.errorBody(S.apiError) : this.docBody(gf, active);
+
+    return {
+      isExtraction: S.view==='extraction',
+      isEval: S.view==='eval',
+      docType: S.sample,
+      docFile: S.sample==='intake' ? 'intake_form.txt' : 'path_report.txt',
+      schemaName: S.sample==='intake' ? 'IntakeSchema' : 'PathologySchema',
+      isPath: S.sample==='pathology',
+      pathBg: S.sample==='pathology' ? '#FFFFFF' : 'transparent',
+      pathColor: S.sample==='pathology' ? '#15181D' : '#8A909A',
+      pathShadow: S.sample==='pathology' ? pillShadow : 'none',
+      intakeBg: S.sample==='intake' ? '#FFFFFF' : 'transparent',
+      intakeColor: S.sample==='intake' ? '#15181D' : '#8A909A',
+      intakeShadow: S.sample==='intake' ? pillShadow : 'none',
+      setPath: ()=> this.setState(s=> s.sample==='pathology' ? null : { sample:'pathology' }, ()=> this.reload()),
+      setIntake: ()=> this.setState(s=> s.sample==='intake' ? null : { sample:'intake' }, ()=> this.reload()),
+      fields: all.slice(0, S.revealed),
+      ghosts: gf.slice(S.revealed).map(d=>({ name:d.name })),
+      hasGhosts: !S.apiError && (S.revealed < gf.length || S.loading),
+      documentBody,
+      showJSON: S.showJSON, jsonText,
+      countsText: footer.countsText, modelChip: footer.model, cost: footer.cost, latency: footer.latency, pv: footer.pv, sv: footer.sv,
+      evalRows: ev.evalRows, macroF1: ev.macroF1, halluc: ev.halluc, routing: ev.routing, goldCount: ev.goldCount,
+      extBg: S.view==='extraction' ? '#FFFFFF' : 'transparent',
+      extColor: S.view==='extraction' ? '#15181D' : '#8A909A',
+      extShadow: S.view==='extraction' ? pillShadow : 'none',
+      evalBg: S.view==='eval' ? '#FFFFFF' : 'transparent',
+      evalColor: S.view==='eval' ? '#15181D' : '#8A909A',
+      evalShadow: S.view==='eval' ? pillShadow : 'none',
+      jsonLabel: S.showJSON ? 'Hide JSON' : 'JSON',
+      caughtLabel: S.showCaught ? 'Hide caught' : 'Show caught hallucination',
+      caughtBg: S.showCaught ? this.hexA('#CB4A45',0.10) : '#F1F3F6',
+      caughtColor: S.showCaught ? '#CB4A45' : '#545B66',
+      caughtShadow: S.showCaught ? 'inset 0 0 0 1px rgba(203,74,69,.22)' : 'inset 0 0 0 1px #E8EAEE',
+      goExtraction: ()=> this.setState({ view:'extraction' }),
+      goEval: ()=> this.setState({ view:'eval' }, ()=> this.loadEval()),
+      rerun: ()=> this.reload(),
+      toggleJSON: ()=> this.setState(s=>({ showJSON:!s.showJSON })),
+      // The caught-hallucination view is a scripted illustration (path-only) — toggling it just
+      // re-streams the scripted rows; no refetch (the live model rarely hallucinates).
+      toggleCaught: ()=> this.setState(s=>({ showCaught:!s.showCaught }), ()=> this.runReveal()),
+    };
+  }
+
+  // A calm inline notice for an error envelope (Split 09 builds the full per-type notices). Keeps
+  // the demo from going blank when the API returns {error:{type,message,hint}}.
+  errorBody(err){
+    err = err || {};
+    return React.createElement('div', {
+      style:{ padding:'18px 20px', borderRadius:'10px', background:'#FBECEB', boxShadow:'inset 0 0 0 1px rgba(203,74,69,.22)',
+        color:'#8A3A36', fontSize:'13px', lineHeight:1.6, fontFamily:"'Schibsted Grotesk',system-ui,sans-serif" },
+    }, [
+      React.createElement('div', { key:'m', style:{ fontWeight:600, marginBottom: err.hint ? '6px' : 0 } }, err.message || 'Something went wrong.'),
+      err.hint ? React.createElement('div', { key:'h', style:{ color:'#B07520' } }, err.hint) : null,
+    ]);
+  }
+}
+</script>
+</body>
+</html>

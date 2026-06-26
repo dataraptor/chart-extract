@@ -24,3 +24,20 @@ The **live** backend is Azure OpenAI **GPT-5.5** (`provider/openai.py`). Copy
 (or `OPENAI_API_KEY` for api.openai.com), export them, and the CLI auto-selects the live provider
 (use `--stub` to force offline). **Live calls are opt-in and cost money.** The `@pytest.mark.api`
 conformance tests need a key and auto-skip without one, so the free Tier-1 suite always passes.
+
+## Run the real UI
+
+The web UI in [`app/`](app/) is wired to the live engine. Install and serve the API (it serves the
+UI at the same origin, so there's no CORS to configure):
+
+```bash
+make install-api      # pip install -e "core/[providers]" and "api/[eval]"
+chartextract-api      # serves the UI + API at http://localhost:8000/
+```
+
+Open <http://localhost:8000/>. With no key it runs the deterministic **stub** (every value real,
+`$0`); with a key set it runs **live GPT-5.5**. The page fetches `/api/samples`, `/api/extract`,
+and `/api/eval` — the document text, field values, spans, offsets, flags, confidence, counts, cost,
+and the eval leaderboard all come from the engine. Append `?stub=1` (or open `app/ChartExtract.dc.html`
+with no server) to fall back to the inline canned data for a no-backend preview. Full demo
+orchestration (a one-command launch + Docker) lands later; this is enough to see it live.

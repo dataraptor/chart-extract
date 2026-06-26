@@ -195,6 +195,21 @@ def test_nullable_scalar_collapses_to_type_array() -> None:
     assert field_int["type"] == ["integer", "null"]
 
 
+def test_listfield_item_is_typed_no_typeless_anyof_member() -> None:
+    """Regression (Split 05 live-intake finding): the ``ListField`` item must be a typed
+    ``Field[str]`` so strict mode never emits a typeless ``anyOf`` member — which Azure rejects
+    (``schema must have a 'type' key``). Every ``anyOf`` member must carry type/enum/``$ref``.
+    """
+    schema = strict_json_schema(IntakeSchema)
+    # The bare unparametrized `Field` def (the source of the typeless `value`) must be gone.
+    assert "Field" not in schema["$defs"]
+    assert "Field_str_" in schema["$defs"]
+    assert schema["$defs"]["Field_str_"]["properties"]["value"]["type"] == ["string", "null"]
+    for node in _iter_nodes(schema):
+        for member in node.get("anyOf", []):
+            assert {"type", "enum", "$ref"} & set(member), f"typeless anyOf member: {member}"
+
+
 # --- extract: happy path + request hygiene -----------------------------------
 
 
