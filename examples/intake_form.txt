@@ -1,0 +1,16 @@
+PATIENT INTAKE FORM
+Date: 2026-06-20          MRN: 0084213
+
+PATIENT: Jane Doe        DOB: 1971-03-14
+Sex: Female              Phone: (555) 0142
+
+CHIEF COMPLAINT: Persistent cough, 3 weeks.
+
+MEDICATIONS:
+- Lisinopril 10 mg daily
+- Metformin 500 mg twice daily
+- Atorvastatin 20 mg nightly
+
+ALLERGIES: Penicillin (rash). No known food allergies.
+
+SMOKING STATUS: Former smoker, quit 2015.
