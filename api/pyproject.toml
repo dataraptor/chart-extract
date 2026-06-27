@@ -8,8 +8,17 @@ version = "0.1.0"
 description = "ChartExtract HTTP API — a thin FastAPI adapter exposing the chartextract engine over HTTP."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = { text = "Proprietary" }
 authors = [{ name = "Shamim Ahamed" }]
+keywords = ["fastapi", "http", "extraction", "chartextract"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: Other/Proprietary License",
+    "Operating System :: OS Independent",
+    "Framework :: FastAPI",
+]
 # Depends on the installed `chartextract` engine (editable: `pip install -e core/`). It NEVER
 # duplicates engine logic (grounding/flags/scoring all stay in core) — FastAPI is just the HTTP
 # surface that imports `core` (and optionally `eval`) and serializes their results.
@@ -53,6 +62,10 @@ markers = [
 branch = true
 source = ["chartextract_api"]
 omit = ["tests/*"]
+
+[tool.coverage.report]
+# The repo-wide production-ready gate (Split 12). `pytest --cov` fails under this threshold.
+fail_under = 85
 
 [tool.ruff]
 line-length = 100

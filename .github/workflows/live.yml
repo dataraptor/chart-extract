@@ -1,0 +1,42 @@
+name: Live API tests (manual, secret-gated)
+
+# Opt-in only: runs the @pytest.mark.api tests that call the real Azure OpenAI GPT-5.5 provider.
+# Triggered manually and skipped entirely unless an AZURE_OPENAI_API_KEY secret is configured, so
+# it NEVER gates a merge and never costs money on an ordinary push. The keyless CI workflow
+# (ci.yml) is the gate that protects `main`.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live:
+    name: Live @api conformance (GPT-5.5)
+    runs-on: ubuntu-latest
+    if: ${{ secrets.AZURE_OPENAI_API_KEY != '' }}
+    env:
+      AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+      AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
+      OPENAI_API_VERSION: ${{ secrets.OPENAI_API_VERSION }}
+      CHAT_LLM_MODEL: ${{ secrets.CHAT_LLM_MODEL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install packages
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "core/[providers,dev]"
+          pip install -e "eval/[dev]"
+          pip install -e "api/[dev]"
+          pip install -e "api/[eval]"
+
+      - name: Run @api tests (live provider)
+        run: |
+          ( cd core && pytest -q -m api )
+          ( cd api  && pytest -q -m api )

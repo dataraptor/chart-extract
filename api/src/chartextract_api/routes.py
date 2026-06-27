@@ -26,6 +26,23 @@ from .schemas import EvalSummary, ExtractRequest, HealthResponse, SampleItem
 #: Upload file extensions the engine can load (text-layer only — OCR is out of scope, §4).
 _ALLOWED_UPLOAD_SUFFIXES = (".txt", ".pdf")
 
+#: Hard input ceilings (Split 12 hardening). A synthetic clinical doc is a few KB; these bound
+#: memory/abuse without constraining any real document. Oversized input is rejected with an
+#: envelope (413), never read fully into memory and never crashed.
+_MAX_UPLOAD_BYTES = 5 * 1024 * 1024  # 5 MB
+_MAX_TEXT_CHARS = 1_000_000  # ~1 MB of inline text
+
+
+def _reject_oversized_text(text: str | None) -> None:
+    """Reject inline text past :data:`_MAX_TEXT_CHARS` with a 413 envelope (not a crash)."""
+    if text is not None and len(text) > _MAX_TEXT_CHARS:
+        raise APIError(
+            413,
+            "payload_too_large",
+            f"inline text is too large ({len(text)} chars; limit {_MAX_TEXT_CHARS})",
+            hint="submit a smaller document",
+        )
+
 
 def register_routes(app: FastAPI) -> None:
     @app.get("/health", response_model=HealthResponse)
@@ -108,6 +125,7 @@ async def _parse_json(
         doc_text = deps.sample_text(req.sample_id)
         return req.sample_id, None, req.schema_override, req.provider, doc_text, req.sample_id
     # inline text
+    _reject_oversized_text(req.text)
     return None, req.text, req.schema_override, req.provider, req.text or "", "inline"
 
 
@@ -134,7 +152,18 @@ async def _parse_multipart(
                 f"unsupported file type {suffix or '(none)'!r}",
                 hint="text-layer PDF or .txt only (OCR is out of scope)",
             )
+        # Reject an oversized part before slurping it into memory: Starlette sets `size` from the
+        # multipart part's length when available.
+        declared = getattr(upload, "size", None)
+        if isinstance(declared, int) and declared > _MAX_UPLOAD_BYTES:
+            raise _too_large(declared)
         data = await upload.read()
+        if len(data) > _MAX_UPLOAD_BYTES:
+            raise _too_large(len(data))
+        # A `.txt` whose bytes aren't valid UTF-8 (or contain NULs) is binary, not a text layer —
+        # reject it cleanly instead of letting `load()` raise UnicodeDecodeError into a 500.
+        if suffix == ".txt":
+            _reject_binary_text(data)
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
         try:
             tmp.write(data)
@@ -144,7 +173,32 @@ async def _parse_multipart(
         return None, None, schema, provider, Path(tmp.name), filename
     if sample_id is not None:
         return sample_id, None, schema, provider, deps.sample_text(sample_id), sample_id
+    _reject_oversized_text(text)
     return None, text, schema, provider, text or "", "inline"
+
+
+def _too_large(n: int) -> APIError:
+    """A 413 envelope for an upload past :data:`_MAX_UPLOAD_BYTES` (surfaced, never crashed)."""
+    return APIError(
+        413,
+        "payload_too_large",
+        f"upload is too large ({n} bytes; limit {_MAX_UPLOAD_BYTES})",
+        hint="submit a smaller text-layer PDF or .txt file",
+    )
+
+
+def _reject_binary_text(data: bytes) -> None:
+    """Reject a ``.txt`` upload that isn't valid UTF-8 text (binary masquerading as text)."""
+    if b"\x00" in data:
+        raise APIError(
+            422, "bad_request", "the uploaded .txt file contains binary (NUL) data, not text"
+        )
+    try:
+        data.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise APIError(
+            422, "bad_request", "the uploaded .txt file is not valid UTF-8 text"
+        ) from exc
 
 
 def _require_exactly_one(*, sample_id: object, text: object, file: object) -> None:

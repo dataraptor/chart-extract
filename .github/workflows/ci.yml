@@ -1,0 +1,100 @@
+name: CI
+
+# The always-green gate: lint + keyless Tier-1 tests + coverage gate (>=85%) + PHI guard +
+# package build + (best-effort) Playwright e2e. No secret is required — the engine runs fully
+# offline on the deterministic stub, so every @pytest.mark.api test auto-skips and CI is free and
+# reproducible. (A separate, secret-gated workflow runs the live @api tests; it never gates merge.)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Belt-and-braces: keep the live provider unset so the suite is deterministic on the stub.
+  AZURE_OPENAI_API_KEY: ""
+  AZURE_OPENAI_ENDPOINT: ""
+  OPENAI_API_KEY: ""
+
+jobs:
+  python:
+    name: Lint · test · coverage · build (keyless)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install packages (editable, with dev + provider extras)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "core/[providers,dev]"
+          pip install -e "eval/[dev]"
+          pip install -e "api/[dev]"
+          pip install -e "api/[eval]"
+          pip install build pip-audit
+
+      - name: Lint (ruff check + format --check)
+        run: |
+          for pkg in core eval api; do
+            ( cd "$pkg" && ruff check . && ruff format --check . )
+          done
+
+      - name: PHI guard (bundled docs must stay synthetic)
+        run: python scripts/check_phi.py
+
+      - name: Tier-1 tests + coverage gate (>=85%, key unset)
+        run: |
+          ( cd core && pytest -q -m "not api" --cov --cov-report=term-missing )
+          ( cd api  && pytest -q -m "not api" --cov --cov-report=term-missing )
+          ( cd eval && pytest -q -m "not api" --cov --cov-report=term-missing )
+          pytest tests -q -m "not api"
+
+      - name: Build sdist + wheel for each package
+        run: |
+          for pkg in core eval api; do
+            python -m build "$pkg"
+          done
+
+      - name: Dependency audit (informational — advisories shift daily, never gates merge)
+        continue-on-error: true
+        run: |
+          pip-audit -r <(printf 'pydantic\npypdf\nopenai\nanthropic\nfastapi\nuvicorn\npython-multipart\nhttpx\n')
+
+  e2e:
+    name: Cross-stack e2e (Playwright over api(stub) + app)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install the engine + API (the e2e webServer boots chartextract-api keyless)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "core/[providers,dev]"
+          pip install -e "eval/[dev]"
+          pip install -e "api/[dev]"
+          pip install -e "api/[eval]"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Playwright + Chromium
+        working-directory: app
+        run: |
+          npm install
+          npx playwright install --with-deps chromium
+
+      - name: Run e2e + a11y + responsive suite (stub provider, deterministic)
+        working-directory: app
+        run: npm run e2e

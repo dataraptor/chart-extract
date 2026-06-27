@@ -8,8 +8,17 @@ version = "0.1.0"
 description = "ChartExtract — a grounded, eval-proven clinical-document field-extraction engine."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = { text = "Proprietary" }
 authors = [{ name = "Shamim Ahamed" }]
+keywords = ["clinical", "extraction", "grounding", "llm", "pydantic"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: Other/Proprietary License",
+    "Operating System :: OS Independent",
+    "Typing :: Typed",
+]
 dependencies = [
     "pydantic>=2",
     "pypdf>=4",
@@ -47,6 +56,10 @@ markers = [
 [tool.coverage.run]
 branch = true
 source = ["chartextract"]
+
+[tool.coverage.report]
+# The repo-wide production-ready gate (Split 12). `pytest --cov` fails under this threshold.
+fail_under = 85
 
 [tool.ruff]
 line-length = 100

@@ -2,7 +2,7 @@
 # On Windows without `make`, run the underlying command in each recipe directly.
 # Python is `python` here; on this box the interpreter is C:/ProgramData/miniconda3/python.exe.
 .PHONY: install install-api test test-api lint cov demo demo-stub serve eval \
-        e2e e2e-install docker-build docker-up clean
+        e2e e2e-install docker-build docker-up clean phi audit build ci
 
 # --- Install ----------------------------------------------------------------
 
@@ -33,9 +33,31 @@ lint:
 	cd eval && python -m ruff check . && python -m ruff format --check .
 	cd api  && python -m ruff check . && python -m ruff format --check .
 
-# Coverage gate on the engine's Tier-1 suite (the per-package threshold lives in pyproject).
+# Coverage gate across every package's Tier-1 suite. The >=85% threshold lives in each
+# pyproject's [tool.coverage.report] fail_under, so a drop fails the run.
 cov:
-	cd core && python -m pytest -q -m "not api" --cov=chartextract --cov-report=term-missing
+	cd core && python -m pytest -q -m "not api" --cov --cov-report=term-missing
+	cd api  && python -m pytest -q -m "not api" --cov --cov-report=term-missing
+	cd eval && python -m pytest -q -m "not api" --cov --cov-report=term-missing
+
+# PHI tripwire: bundled docs must stay synthetic (no real SSN/email/phone).
+phi:
+	python scripts/check_phi.py
+
+# Build an sdist + wheel for each package (catches packaging breakage).
+build:
+	python -m build core
+	python -m build eval
+	python -m build api
+
+# Dependency audit of the project's declared closure (informational; advisories shift daily).
+audit:
+	pip-audit -r <(printf 'pydantic\npypdf\nopenai\nanthropic\nfastapi\nuvicorn\npython-multipart\nhttpx\n')
+
+# Reproduce the keyless CI gate locally (lint + PHI + tests/coverage + root tests + build).
+ci: lint phi cov
+	python -m pytest tests -q -m "not api"
+	$(MAKE) build
 
 # --- Demo / run -------------------------------------------------------------
 

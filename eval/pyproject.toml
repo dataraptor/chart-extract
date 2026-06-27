@@ -8,8 +8,16 @@ version = "0.1.0"
 description = "ChartExtract field-level eval harness — frozen gold set, normalizers, and the leaderboard."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = { text = "Proprietary" }
 authors = [{ name = "Shamim Ahamed" }]
+keywords = ["eval", "leaderboard", "extraction", "chartextract"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: Other/Proprietary License",
+    "Operating System :: OS Independent",
+]
 # Depends on the installed `chartextract` engine (editable: `pip install -e core/`) — it never
 # duplicates engine logic, it drives `chartextract.extract` over the gold set and scores the result.
 dependencies = [
@@ -43,6 +51,10 @@ markers = [
 branch = true
 source = ["eval"]
 omit = ["tests/*"]
+
+[tool.coverage.report]
+# The repo-wide production-ready gate (Split 12). `pytest --cov` fails under this threshold.
+fail_under = 85
 
 [tool.ruff]
 line-length = 100
