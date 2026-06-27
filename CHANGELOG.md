@@ -60,5 +60,3 @@ to run.
 
 - No secret in the repo or image. Keys come only from env; `.env` is git-ignored; Docker passes the
   key at runtime, never baked. Dependency closure audited clean.
-
-[0.1.0]: https://example.invalid/chartextract/releases/tag/v0.1.0

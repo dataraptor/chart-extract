@@ -21,8 +21,8 @@ pipeline, not a hope about the model.
 ## The four packages, and how they wire together
 
 ChartExtract is one engine plus three thin layers around it. **`core/` is a plain importable Python
-module. Everything that can import it does — there is no service-to-service HTTP between the Python
-components.**
+module. Everything that can import it does, so there is no service-to-service HTTP between the
+Python components.**
 
 ```mermaid
 flowchart LR
@@ -55,7 +55,7 @@ flowchart LR
   harness runs serially for byte-identical output, and there is no network or shared server to make
   it flaky.
 - **`api/`** is a *thin* FastAPI adapter. Its success body for `POST /api/extract` is literally
-  `ExtractionResult.model_dump()` — the identical shape the UI's JSON inspector renders. The "no
+  `ExtractionResult.model_dump()`, the identical shape the UI's JSON inspector renders. The "no
   extraction/provider logic in `api/`" rule keeps the engine the single source of truth.
 - **`app/`** is the one component that can't import a Python module (it runs in the browser), so it
   is the only one that talks over **HTTP** through `api/`, which serves it **same-origin** (no CORS
@@ -74,13 +74,13 @@ one function. Five stages, only one of which is the LLM.
 flowchart TD
     IN([doc: str · Path · LoadedDoc]) --> L
 
-    subgraph load["1 · load — load.py"]
+    subgraph load["1 · load · load.py"]
         L["normalize newlines once<br/>PDF text-layer or .txt → one canonical string"]
         L --> LD[["LoadedDoc<br/>text · has_text_layer · n_chars"]]
     end
 
     LD --> R
-    subgraph route["2 · route — router.py"]
+    subgraph route["2 · route · router.py"]
         R{"--schema override?"}
         R -- "yes" --> RS["use it (conf 1.0)"]
         R -- "no" --> RC["provider.classify_doc_type"]
@@ -92,7 +92,7 @@ flowchart TD
     RS --> X["3 · provider.extract<br/>returns a schema instance:<br/>value · source_span · confidence per field<br/>(no offsets, ever) + token Usage"]
 
     X --> G
-    subgraph ground["4 · ground — grounding.py + confidence.py"]
+    subgraph ground["4 · ground · grounding.py + confidence.py"]
         G["for each field / list item:<br/>ground span → SpanMatch"]
         G --> SC["structural_confidence =<br/>min(model_conf, match_weight)"]
         SC --> AF["assign_flag → (flag, maybe-nulled value)"]
@@ -118,7 +118,7 @@ flowchart TD
    pipeline honestly drops all offsets to `None` rather than fake them.
 2. **route** ([`router.py`](../core/src/chartextract/router.py)) takes the explicit `--schema`
    override (confidence 1.0) or calls the classifier. A type not in `SCHEMAS` raises
-   `UnknownDocTypeError` — the engine never silently defaults to a schema.
+   `UnknownDocTypeError`; the engine never silently defaults to a schema.
 3. **extract** is the only LLM call on the field path. The provider returns a validated schema
    instance and a token `Usage`; the call is timed for `latency_s`.
 4. **ground** locates each proposed span, floors the confidence by match quality, and assigns the
@@ -133,7 +133,7 @@ flowchart TD
 This is the heart of the system. The model hands back `{value, source_span, confidence}`. Two
 deterministic functions decide what survives.
 
-### Span matching — `ground()` in `grounding.py`
+### Span matching: `ground()` in `grounding.py`
 
 A whitespace-tolerant matcher tries strategies **in a fixed order** and stops at the first hit,
 recording how good the match was:
@@ -159,7 +159,7 @@ flowchart TD
 The result is a `SpanMatch` carrying `match_quality`, `char_start`, `char_end`, and `n_matches`
 (only an `exact` match can report `n_matches > 1`).
 
-### Flag assignment — `assign_flag()` in `confidence.py`
+### Flag assignment: `assign_flag()` in `confidence.py`
 
 Structural confidence is first floored by the match weight:
 `structural_conf = min(model_conf, MATCH_WEIGHT[match_quality])`, where
@@ -201,7 +201,7 @@ The full flag taxonomy (`GroundFlag`):
 | `ambiguous_span` | A short span (< 12 non-space chars) that occurs in several places | kept, flagged |
 | `not_grounded` | The model invented a value; its span is **not in the document** | **nulled**; proposal kept on `model_value` |
 | `not_found` | The document is silent; the model returned `null` with an empty span | null |
-| `not_assessed` | The document **explicitly states** the field was not determined — a *cited* absence | null |
+| `not_assessed` | The document **explicitly states** the field was not determined, a *cited* absence | null |
 
 `not_grounded` is the structural guarantee: any value whose span can't be located is forced to
 `null`, so a hallucinated value can never reach the output. `ambiguous_span` is checked before
@@ -248,7 +248,7 @@ classDiagram
     ExtractionResult "1" --> "many" GroundedField
 ```
 
-What the **model** returns (per field): `value`, `source_span`, `confidence` — and for a `ListField`
+What the **model** returns (per field): `value`, `source_span`, `confidence`, and for a `ListField`
 (e.g. `medications`, `allergies`), a list of those, flattened by code into `medications[0]`,
 `medications[1]`, … rows. What **code** adds: `char_start`/`char_end`, `match_quality`,
 the floored `confidence`, the `flag`, `n_matches`, and (only when nulled as `not_grounded`) the
@@ -288,8 +288,8 @@ flowchart LR
   refusal or truncation surfaces as a typed `RefusalError`/`TruncatedError` (never an index-error
   crash), retries truncation once with doubled headroom, and reports cached prompt tokens for pricing.
 
-Failures are typed and catchable — `MissingAPIKeyError`, `RefusalError`, `TruncatedError`,
-`UnknownDocTypeError` — which is exactly what lets `api/` map each to a structured error envelope
+Failures are typed and catchable (`MissingAPIKeyError`, `RefusalError`, `TruncatedError`,
+`UnknownDocTypeError`), which is exactly what lets `api/` map each to a structured error envelope
 instead of a 500.
 
 ### Cost, caching, and batch
@@ -299,7 +299,7 @@ rather than silently pricing at `$0`. The system prompt + schema are the stable,
 (document text goes in the user turn), and a 50%-cheaper **Batch API** path
 ([`batch.py`](../core/src/chartextract/batch.py)) re-associates unordered results by `custom_id`. In
 the leaderboard, the live model's cost is labeled **measured** (from real usage) while the
-Anthropic rows are **estimates** computed from pricing — never shown as measured.
+Anthropic rows are **estimates** computed from pricing, never shown as measured.
 
 ---
 
@@ -326,8 +326,8 @@ flowchart LR
 It computes per-field precision/recall/F1, macro-F1, the headline **hallucination-rate** (a non-null
 value where the gold is null, counted loudly), routing accuracy, and a per-doc cost comparison. With
 `--repeats N` the distributional metrics report mean ± spread (run `--provider openai` for a live
-GPT-5.5 sweep, optionally `--batch`). The gold set is small and never real PHI — report F1 with wide
-intervals; **ChartExtract is not a medical device.**
+GPT-5.5 sweep, optionally `--batch`). The gold set is small and never real PHI, so report F1 with
+wide intervals; **ChartExtract is not a medical device.**
 
 ---
 
@@ -348,7 +348,7 @@ flowchart TD
 
     N([workflow_dispatch only]) --> F["Live job (live.yml)<br/>WITH secret · opt-in"]
     F --> CHK{"AZURE_OPENAI_API_KEY<br/>secret present?"}
-    CHK -- "no" --> SKIP["skipped — never gates merge"]
+    CHK -- "no" --> SKIP["skipped · never gates merge"]
     CHK -- "yes" --> API["pytest -m api<br/>live GPT-5.5 conformance (core · api)"]
 
     style G fill:#dbeafe,stroke:#1e40af
@@ -371,7 +371,7 @@ whole keyless gate locally with `make ci`.
 ## Where things live
 
 ```text
-core/    the chartextract engine — load · router · provider seam · grounding · confidence · cost · batch · CLI
+core/    the chartextract engine: load · router · provider seam · grounding · confidence · cost · batch · CLI
 api/     thin FastAPI adapter over core.extract; serves app/ same-origin (+ Dockerfile)
 app/     the browser UI (HTTP to api/), with Playwright e2e / a11y / responsive suites
 eval/    field-level eval harness + frozen synthetic gold set + type-aware normalizers

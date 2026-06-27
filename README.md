@@ -17,8 +17,8 @@ verdict). The story is always *document to structured schema*.
 ## Architecture
 
 The model never returns offsets. It returns `{value, source_span, confidence}` only; **everything
-that makes a value trustworthy — character offsets, match quality, structural confidence, and the
-flag — is computed deterministically in code.** That is what makes hallucination-rate 0 structural.
+that makes a value trustworthy (character offsets, match quality, structural confidence, and the
+flag) is computed deterministically in code.** That is what makes hallucination-rate 0 structural.
 
 🟦 deterministic (code; the only thing ever gated) · 🟨 LLM (proposes `{value, source_span,
 confidence}`, never trusted alone) · 🟥 honesty short-circuit (ungrounded → `null` + flag).
@@ -47,12 +47,12 @@ flowchart LR
     style UK fill:#fee2e2,stroke:#b91c1c
 ```
 
-- **load** turns a PDF text-layer or plain text into one canonical string — the single source of
+- **load** turns a PDF text-layer or plain text into one canonical string, the single source of
   character offsets; a missing text layer is flagged honestly (highlight disabled, never faked).
 - **route** uses a schema override when given, otherwise a doc-type classifier; an unresolved type
   is surfaced as `UnknownDocTypeError`, never guessed.
-- **provider.extract** asks the model for `{value, source_span, confidence}` per field — no offsets,
-  ever.
+- **provider.extract** asks the model for `{value, source_span, confidence}` per field, with no
+  offsets, ever.
 - **ground** runs a whitespace-tolerant matcher that locates each span, scores match quality
   (`exact=1.0`, `whitespace=0.92`, `prefix=0.5`), floors structural confidence by that weight, and
   assigns the flag. A span that doesn't appear in the source becomes `value=null`, flag
@@ -63,9 +63,9 @@ flowchart LR
 The engine (`core/`) is a provider-agnostic, importable module; the realized live backend is
 **Azure OpenAI GPT-5.5** (`core/src/chartextract/provider/openai.py`), and a deterministic offline
 **stub** runs the whole pipeline with no key. The thin HTTP adapter (`api/`) and the eval harness
-(`eval/`) both **import `core` in-process** — the eval is parallel-safe because of it. The browser
-UI (`app/`) is the one component that can't import Python, so it talks to `api/` over HTTP; the
-adapter only reshapes what the engine already produced.
+(`eval/`) both **import `core` in-process**, so there is no service-to-service HTTP between the
+Python components. The browser UI (`app/`) is the one component that can't import Python, so it
+talks to `api/` over HTTP; the adapter only reshapes what the engine already produced.
 
 ## The money demo
 
@@ -171,7 +171,7 @@ eval/    field-level eval harness + frozen gold set + normalizers
 examples/ path_report.txt, intake_form.txt   demo.py  Makefile  docker-compose.yml
 ```
 
-The full architecture — in-process wiring, the pipeline stage by stage, the grounding decision
-procedure, data contracts, the provider seam, and the two-tier CI — is in
+The full architecture (in-process wiring, the pipeline stage by stage, the grounding decision
+procedure, data contracts, the provider seam, and the two-tier CI) is in
 [`docs/architecture.md`](docs/architecture.md). The UI/UX design specification is
 [`app/ChartExtract-UIUX-Spec.md`](app/ChartExtract-UIUX-Spec.md).
