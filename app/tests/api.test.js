@@ -80,3 +80,36 @@ test("non-JSON error body: still resolves to a tagged error", async () => {
   assert.equal(out.ok, false);
   assert.match(out.error.message, /500/);
 });
+
+// --- Split 09: simulate query param + multipart upload -----------------------
+
+test("extract: a `simulate` arg is appended as the dev-only query param", async () => {
+  const f = fakeFetch(jsonRes(422, { error: { type: "refusal", message: "skipped" } }));
+  const client = Api.makeClient({ fetch: f });
+  const out = await client.extract({ sampleId: "path_report", simulate: "refusal" });
+  assert.equal(f.calls[0].url, "/api/extract?simulate=refusal");
+  assert.equal(out.ok, false);
+  assert.equal(out.error.type, "refusal"); // the envelope still flows through as a tagged error
+});
+
+test("extract: no `simulate` arg → the plain /api/extract path (no query string)", async () => {
+  const f = fakeFetch(jsonRes(200, { doc_type: "pathology", fields: [] }));
+  const client = Api.makeClient({ fetch: f });
+  await client.extract({ sampleId: "path_report" });
+  assert.equal(f.calls[0].url, "/api/extract");
+});
+
+test("extractFile: posts multipart FormData and surfaces a 415 envelope (never throws)", async () => {
+  const f = fakeFetch(
+    jsonRes(415, { error: { type: "unsupported_file", message: "bad type", hint: ".txt only" } })
+  );
+  const client = Api.makeClient({ fetch: f });
+  const fakeFile = new Blob([new Uint8Array([0x89, 0x50])], { type: "image/png" });
+  fakeFile.name = "scan.png";
+  const out = await client.extractFile(fakeFile, { schema: "pathology" });
+  assert.equal(f.calls[0].url, "/api/extract");
+  assert.equal(f.calls[0].init.method, "POST");
+  assert.ok(f.calls[0].init.body instanceof FormData);
+  assert.equal(out.ok, false);
+  assert.equal(out.error.type, "unsupported_file");
+});

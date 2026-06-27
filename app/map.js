@@ -60,6 +60,7 @@
    * disclosure on a caught hallucination (`not_grounded`).
    */
   function toFieldRows(result) {
+    var na = highlightDisabled(result);
     return fields(result).map(function (f) {
       return {
         name: f.name,
@@ -71,11 +72,20 @@
         s: f.char_start === undefined ? null : f.char_start,
         e: f.char_end === undefined ? null : f.char_end,
         q: f.match_quality || "none",
+        // how many places the span occurs — the engine's count, for the ambiguous "1 of N" tag.
+        count: f.n_matches || 0,
+        // no-text-layer (vision fallback): the value is real but the highlight is unavailable.
+        highlightNA: na,
         // the rejected proposal the engine retained (only set on not_grounded).
         proposed: f.model_value === undefined ? null : f.model_value,
         model_value: f.model_value === undefined ? null : f.model_value,
       };
     });
+  }
+
+  /** True when the result came from a no-text-layer doc (offsets unavailable, §4 vision fallback). */
+  function highlightDisabled(result) {
+    return !!(result && result.highlight_available === false);
   }
 
   // ---- document-pane highlight ranges --------------------------------------
@@ -87,6 +97,8 @@
    * `ground()`.
    */
   function toHighlightRanges(result) {
+    // No-text-layer doc → highlighting is disabled wholesale; emit no ranges (honest, §5.2).
+    if (highlightDisabled(result)) return [];
     return fields(result)
       .filter(function (f) {
         return f.char_start != null && f.char_end != null;
@@ -174,11 +186,150 @@
     };
   }
 
+  // ---- edge-state notices (Split 09) ---------------------------------------
+  //
+  // The error-envelope `type` (Split 06) → a calm UI notice descriptor. Copy is verbatim from the
+  // UIUX spec (§5.1/§5.2/§5.3/§9); `kind` selects the Banner/Notice variant (§7); `blocking` marks
+  // the unknown-routing state that halts extraction until the human picks a schema.
+
+  var NOTICES = {
+    no_text_layer: {
+      kind: "warning",
+      title: "No text layer detected — highlighting disabled",
+      body: "Extracted via vision fallback; offsets unavailable.",
+      blocking: false,
+    },
+    refusal: {
+      kind: "neutral",
+      title: "Document skipped",
+      body: "This document tripped a safety classifier and was skipped — try another sample.",
+      blocking: false,
+    },
+    truncated: {
+      kind: "info",
+      title: "Output truncated — re-running with more headroom",
+      body: "",
+      blocking: false,
+    },
+    unknown_doc_type: {
+      kind: "warning",
+      title: "unknown — choose a schema",
+      body: "The document type couldn’t be classified. Pick a schema to extract — never guessed.",
+      blocking: true,
+    },
+    unsupported_file: {
+      kind: "error",
+      title: "Unsupported file",
+      body: "text-layer PDF or .txt only (OCR out of scope).",
+      blocking: false,
+    },
+    missing_api_key: {
+      kind: "info",
+      title: "Running offline on canned data",
+      body: "No live key configured — extractions use the deterministic stub.",
+      blocking: false,
+    },
+    network: {
+      kind: "info",
+      title: "Running offline on canned data",
+      body: "The API isn’t reachable — showing canned stub data.",
+      blocking: false,
+    },
+  };
+
+  /**
+   * An error envelope `{type,message,hint}` → the notice descriptor the document pane renders.
+   * Falls back to a recoverable-error descriptor (carrying the server message) for any unknown type.
+   */
+  function toNotice(error) {
+    error = error || {};
+    var spec = NOTICES[error.type];
+    if (!spec) {
+      spec = {
+        kind: "error",
+        title: "Something went wrong",
+        body: error.message || "The request could not be completed.",
+        blocking: false,
+      };
+    }
+    return {
+      type: error.type || "error",
+      kind: spec.kind,
+      title: spec.title,
+      body: spec.body,
+      blocking: !!spec.blocking,
+      hint: error.hint || null,
+    };
+  }
+
+  // ---- misroute hint -------------------------------------------------------
+
+  /**
+   * True when a result is mostly ungrounded — the §9 "looks misrouted — change schema?" signal
+   * (e.g. an intake document scored against the pathology schema). Non-blocking; a gentle nudge.
+   * Fires when ≥60% of fields are `not_found` or `not_grounded`.
+   */
+  function isMisrouted(result) {
+    var fs = fields(result);
+    if (!fs.length) return false;
+    var ungrounded = fs.filter(function (f) {
+      return f.flag === "not_found" || f.flag === "not_grounded";
+    }).length;
+    return ungrounded / fs.length >= 0.6;
+  }
+
+  // ---- ListField grouping (UIUX §5.3) --------------------------------------
+
+  var _ITEM_RE = /^(.+)\[(\d+)\]$/;
+
+  /**
+   * Field rows (from `toFieldRows`) → collapsible ListField group headers. Each flattened
+   * `name[i]` row is gathered under its base name with a `k of n grounded · m review` summary, so
+   * the UI can show the group header over its per-item rows without losing per-item grounding.
+   * Scalar rows (no `[i]`) produce no group. Returns `[{ name, total, grounded, review, label,
+   * items:[name…] }]` in first-appearance order.
+   */
+  function toListGroups(rows) {
+    rows = rows || [];
+    var order = [];
+    var groups = {};
+    rows.forEach(function (r) {
+      var m = _ITEM_RE.exec(r.name || "");
+      if (!m) return;
+      var base = m[1];
+      if (!groups[base]) {
+        groups[base] = { name: base, total: 0, grounded: 0, review: 0, items: [] };
+        order.push(base);
+      }
+      var g = groups[base];
+      g.total += 1;
+      g.items.push(r.name);
+      if (r.value != null) g.grounded += 1;
+      if (r.flag === "needs_review" || r.flag === "ambiguous_span") g.review += 1;
+    });
+    return order.map(function (base) {
+      var g = groups[base];
+      g.label =
+        g.name +
+        " · " +
+        g.grounded +
+        " of " +
+        g.total +
+        " grounded" +
+        (g.review ? " · " + g.review + " review" : "");
+      return g;
+    });
+  }
+
   return {
     toFieldRows: toFieldRows,
     toHighlightRanges: toHighlightRanges,
     toFooterCounts: toFooterCounts,
     toJsonText: toJsonText,
     toEvalView: toEvalView,
+    highlightDisabled: highlightDisabled,
+    toNotice: toNotice,
+    isMisrouted: isMisrouted,
+    toListGroups: toListGroups,
   };
 });

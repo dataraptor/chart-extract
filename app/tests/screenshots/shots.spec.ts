@@ -82,8 +82,14 @@ test.describe("§10 shot list", () => {
     await page.screenshot({ path: path.join(OUT, "06-listfield-intake.png") });
   });
 
-  test.skip("07-no-text-layer-banner — pending Split 09", async () => {
-    // The no-text-layer degraded banner is built in Split 09; regenerate this frame then.
+  test("07-no-text-layer-banner", async ({ page }) => {
+    await page.setViewportSize(WIDE);
+    // Split 09: the dev simulate hook returns a vision-fallback record (highlight_available:false).
+    await page.goto("/?simulate=no_text_layer");
+    await expect(page.getByText("ChartExtract").first()).toBeVisible({ timeout: 30_000 });
+    await expect(page.locator('[data-notice-type="no_text_layer"]')).toBeVisible({ timeout: 30_000 });
+    await expect(page.locator('[data-testid="highlight-na"]').first()).toBeVisible();
+    await page.screenshot({ path: path.join(OUT, "07-no-text-layer-banner.png") });
   });
 
   test("08-narrow-stacked", async ({ page }) => {

@@ -151,6 +151,13 @@ class GroundedField(BaseModel):
     match_quality: MatchQuality = "none"
     confidence: float = 0.0
     flag: GroundFlag = None
+    n_matches: int = 0
+    """How many places the ``source_span`` occurs in the canonical text (the §7 grounding count).
+
+    Only ever ``> 1`` on the **exact** branch — the signal behind the ``ambiguous_span`` flag.
+    Surfaced so the UI can render the "matched N places · 1 of N" tag (UIUX §5.2/§5.3) from the
+    engine's count instead of re-deriving it in JS. ``0`` when the span didn't ground.
+    """
     model_value: object | None = None
     """The value the model PROPOSED, retained when code nulls it (``flag == "not_grounded"``).
 

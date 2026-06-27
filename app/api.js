@@ -97,7 +97,9 @@
       },
       /**
        * POST /api/extract → ExtractionResult (or `{ok:false,error}`).
-       * @param {{sampleId?:string, text?:string, schema?:string, provider?:string}} req
+       * @param {{sampleId?:string, text?:string, schema?:string, provider?:string,
+       *          simulate?:string}} req — `simulate` drives the dev-only edge-state hook
+       *   (Split 09); it's appended as a query param and is inert unless the server is in dev mode.
        */
       extract: function (req) {
         req = req || {};
@@ -106,11 +108,27 @@
         if (req.text != null) payload.text = req.text;
         if (req.schema != null) payload.schema = req.schema;
         if (req.provider != null) payload.provider = req.provider;
-        return request("/api/extract", {
+        var path = "/api/extract";
+        if (req.simulate) path += "?simulate=" + encodeURIComponent(req.simulate);
+        return request(path, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
+      },
+      /**
+       * POST /api/extract (multipart) → ExtractionResult (or `{ok:false,error}`). Wires the upload
+       * drop-zone; an unsupported file resolves to the `415 unsupported_file` envelope (never throws).
+       * @param {File|Blob} file
+       * @param {{schema?:string, provider?:string}} [opts]
+       */
+      extractFile: function (file, opts) {
+        opts = opts || {};
+        var fd = new FormData();
+        fd.append("file", file, file && file.name ? file.name : "upload");
+        if (opts.schema != null) fd.append("schema", opts.schema);
+        if (opts.provider != null) fd.append("provider", opts.provider);
+        return request("/api/extract", { method: "POST", body: fd });
       },
       /** GET /api/eval → EvalReport (or `{ok:false,error}`). */
       evalReport: function () {

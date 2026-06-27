@@ -119,13 +119,15 @@ test("toFieldRows(intake): ListField flattened to name[i]; pcp→not_found", () 
 test("toHighlightRanges uses the API char_start/char_end verbatim", () => {
   const ranges = Map.toHighlightRanges(pathResult);
   const m = byName(ranges);
-  // only the 7 located fields produce ranges (the 2 nulls have null offsets).
-  assert.equal(ranges.length, 7);
+  // 8 located fields produce ranges: the 7 present fields + `margin_status` (not_assessed keeps its
+  // cited-absence offsets so the cyan wash works — Split 08). Only `not_found` has null offsets.
+  assert.equal(ranges.length, 8);
   assert.equal(m.specimen.s, 179);
   assert.equal(m.specimen.e, 202);
   assert.equal(m.tumor_size_cm.s, 252);
   assert.equal(m.tumor_size_cm.e, 269);
-  assert.ok(!("margin_status" in m)); // not_assessed → null offsets → no range
+  assert.ok("margin_status" in m); // not_assessed → cited-absence offsets → a (cyan) range
+  assert.ok(!("lymph_nodes_positive" in m)); // not_found → no value, no offsets, no range
 });
 
 test("toHighlightRanges does NOT re-run grounding: it trusts offsets JS ground() would disagree with", () => {

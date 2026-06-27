@@ -79,6 +79,12 @@ def test_cors_dev_flag_adds_header(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_cli_main_invokes_uvicorn(monkeypatch: pytest.MonkeyPatch) -> None:
     import uvicorn
 
+    # ``--dev`` calls ``os.environ.setdefault`` for the dev flags; pre-seed them (monkeypatch-
+    # tracked, so reverted at teardown) so the setdefault is a no-op and nothing leaks into the
+    # rest of the suite (e.g. enabling the ?simulate= hook for later tests).
+    monkeypatch.setenv("CHARTEXTRACT_DEV", "")
+    monkeypatch.setenv("CHARTEXTRACT_CORS_DEV", "")
+
     captured: dict[str, object] = {}
 
     def _fake_run(target: str, **kwargs: object) -> None:

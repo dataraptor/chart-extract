@@ -6,7 +6,8 @@ whitespace-recovery story (a newline-mangled span still resolves to the right or
 
 from __future__ import annotations
 
-from chartextract import ground
+from chartextract import Field, ground
+from chartextract.grounding import _ground_one
 
 DOC = "ER positive (90%). Margins not assessed. PR positive (40%)."
 
@@ -85,3 +86,20 @@ def test_huge_token_span_skips_regex_falls_through():
     span = " ".join(str(i) for i in range(5000))
     m = ground(span, "short document body")
     assert m.match_quality == "none"
+
+
+def test_ground_fields_surfaces_n_matches_for_ambiguous_span():
+    # A short span occurring twice → ``ambiguous_span`` AND the count rides on the GroundedField so
+    # the UI can render "matched N places · 1 of N" (Split 09) without re-grounding.
+    gf = _ground_one(
+        "er_status", Field(value="positive", source_span="positive", confidence=0.9), DOC
+    )
+    assert gf.flag == "ambiguous_span"
+    assert gf.n_matches == 2
+    # An unambiguous exact field carries n_matches == 1; a not-found field carries 0.
+    one = _ground_one(
+        "x", Field(value="ER positive (90%)", source_span="ER positive (90%)", confidence=0.9), DOC
+    )
+    assert one.n_matches == 1
+    none = _ground_one("y", Field(value=None, source_span="", confidence=0.0), DOC)
+    assert none.n_matches == 0

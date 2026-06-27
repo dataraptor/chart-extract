@@ -62,6 +62,9 @@ export default defineConfig({
       OPENAI_API_KEY: "",
       AZURE_OPENAI_API_KEY: "",
       ANTHROPIC_API_KEY: "",
+      // Split 09: enable the dev-only ?simulate=<type> edge-state hook so the edge specs can drive
+      // each designed failure/unusual-input state deterministically (disabled in prod).
+      CHARTEXTRACT_DEV: "1",
     },
   },
 });

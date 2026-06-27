@@ -151,6 +151,7 @@ def _ground_one(name: str, field: Field, text: str) -> GroundedField:
         match_quality=match.match_quality,
         confidence=confidence,
         flag=flag,
+        n_matches=match.n_matches,
         model_value=model_value,
     )
 

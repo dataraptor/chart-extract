@@ -53,10 +53,27 @@
       </span>
     </div>
 
-    <div style="display:flex;padding:3px;background:#F1F3F6;border-radius:9px;gap:2px;box-shadow:inset 0 0 0 1px #E8EAEE;">
+    <div data-testid="schema-toggle" style="display:flex;padding:3px;background:{{ schemaToggleBg }};border-radius:9px;gap:2px;box-shadow:{{ schemaToggleShadow }};">
       <button onClick="{{ setPath }}" style="border:none;cursor:pointer;font-size:12.5px;font-weight:500;letter-spacing:-.01em;padding:6px 13px;border-radius:7px;background:{{ pathBg }};color:{{ pathColor }};box-shadow:{{ pathShadow }};transition:all 150ms ease;">Pathology</button>
       <button onClick="{{ setIntake }}" style="border:none;cursor:pointer;font-size:12.5px;font-weight:500;letter-spacing:-.01em;padding:6px 13px;border-radius:7px;background:{{ intakeBg }};color:{{ intakeColor }};box-shadow:{{ intakeShadow }};transition:all 150ms ease;">Intake</button>
     </div>
+
+    <sc-if value="{{ routeBlocked }}" hint-placeholder-val="{{ false }}">
+      <span data-testid="route-block-chip" style="display:flex;align-items:center;gap:7px;padding:5px 11px;border-radius:8px;background:#FAF1E3;box-shadow:inset 0 0 0 1px #E6CE9E;font-size:12px;font-weight:500;color:#8A5A14;letter-spacing:-.005em;">
+        <span style="width:6px;height:6px;border-radius:50%;background:#B07520;"></span>unknown &mdash; choose a schema
+      </span>
+    </sc-if>
+
+    <label data-testid="upload" title="Upload a text-layer PDF or .txt" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12.5px;font-weight:500;letter-spacing:-.01em;color:#545B66;background:#F1F3F6;padding:6px 12px;border-radius:8px;box-shadow:inset 0 0 0 1px #E8EAEE;transition:all 150ms ease;" style-hover="color:#15181D;box-shadow:inset 0 0 0 1px #CFD3DA;">
+      <span style="font-size:14px;line-height:1;">&#8593;</span>Upload
+      <input data-testid="upload-input" type="file" onChange="{{ onUpload }}" style="display:none;" />
+    </label>
+
+    <sc-if value="{{ isOffline }}" hint-placeholder-val="{{ false }}">
+      <span data-testid="offline-chip" title="No live key configured" style="display:flex;align-items:center;gap:7px;padding:5px 11px;border-radius:999px;background:#F1F3F6;box-shadow:inset 0 0 0 1px #E2E5EA;font-size:12px;color:#5A616B;letter-spacing:-.005em;">
+        <span style="width:6px;height:6px;border-radius:50%;background:#8A909A;"></span>offline &middot; canned data
+      </span>
+    </sc-if>
 
     <div style="display:flex;padding:3px;background:#F1F3F6;border-radius:9px;gap:2px;box-shadow:inset 0 0 0 1px #E8EAEE;">
       <button onClick="{{ goExtraction }}" style="border:none;cursor:pointer;font-size:12.5px;font-weight:500;letter-spacing:-.01em;padding:6px 14px;border-radius:7px;background:{{ extBg }};color:{{ extColor }};box-shadow:{{ extShadow }};transition:all 150ms ease;">Extraction</button>
@@ -78,7 +95,7 @@
       <section style="flex:1 1 360px;min-width:300px;min-height:0;display:flex;flex-direction:column;background:#FAFBFC;box-shadow:inset -1px 0 0 #E8EAEE;">
         <header style="flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:clamp(13px,1.2vw,17px) clamp(14px,2vw,26px);box-shadow:inset 0 -1px 0 #E8EAEE;">
           <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#5A616B;text-transform:uppercase;">Source &middot; {{ docFile }}</span>
-          <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:#0B6E3F;font-weight:500;"><span style="width:6px;height:6px;border-radius:50%;background:#15915B;"></span>text-layer ready</span>
+          <span data-testid="doc-layer-status" style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:{{ docLayerColor }};font-weight:500;"><span style="width:6px;height:6px;border-radius:50%;background:{{ docLayerDot }};"></span>{{ docLayerLabel }}</span>
         </header>
         <div id="ce-doc" tabIndex="0" role="region" aria-label="Source document" style="flex:1;min-height:0;padding:clamp(16px,1.6vw,26px) clamp(14px,2vw,26px);overflow:auto;">
           {{ documentBody }}
@@ -90,6 +107,9 @@
           <span style="display:flex;align-items:center;gap:9px;min-width:0;">
             <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#5A616B;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Extraction &middot; {{ schemaName }}</span>
             <span style="flex:none;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.04em;color:#2266C9;background:#EEF4FD;padding:3px 7px;border-radius:6px;">routed auto 0.92</span>
+            <sc-if value="{{ misrouteHint }}" hint-placeholder-val="{{ false }}">
+              <button data-testid="misroute-hint" onClick="{{ goIntake }}" title="Re-extract with the intake schema" style="flex:none;border:none;cursor:pointer;font-size:10.5px;letter-spacing:.01em;color:#8A5A14;background:#FAF1E3;box-shadow:inset 0 0 0 1px #E6CE9E;padding:3px 8px;border-radius:6px;">looks misrouted &mdash; change schema?</button>
+            </sc-if>
           </span>
           <span style="display:flex;gap:7px;flex:none;">
             <sc-if value="{{ isPath }}" hint-placeholder-val="{{ true }}">
@@ -99,8 +119,17 @@
           </span>
         </header>
         <div data-testid="fields" role="group" aria-label="Extracted fields" aria-live="polite" style="flex:1;min-height:0;overflow:auto;">
+          <sc-if value="{{ hasListGroups }}" hint-placeholder-val="{{ false }}">
+            <sc-for list="{{ listGroups }}" as="grp" hint-placeholder-count="0">
+              <div data-testid="listfield-group" data-group="{{ grp.name }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px clamp(14px,2vw,26px);background:#F8F9FB;box-shadow:inset 0 -1px 0 #E8EAEE;">
+                <button onClick="{{ grp.onToggle }}" aria-expanded="{{ grp.expanded }}" style="display:flex;align-items:center;gap:9px;border:none;cursor:pointer;background:transparent;padding:0;font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.02em;color:#5A616B;" style-focus="outline:2px solid #3975EE;outline-offset:2px;">
+                  <span style="display:inline-block;width:11px;font-size:10px;color:#8A909A;">{{ grp.caret }}</span>{{ grp.label }}
+                </button>
+              </div>
+            </sc-for>
+          </sc-if>
           <sc-for list="{{ fields }}" as="field" hint-placeholder-count="7">
-            <div data-testid="field-row" data-field="{{ field.name }}" data-flag="{{ field.flag }}" tabIndex="0" role="button" aria-label="{{ field.ariaLabel }}" onMouseEnter="{{ field.onEnter }}" onMouseLeave="{{ field.onLeave }}" onFocus="{{ field.onEnter }}" onBlur="{{ field.onLeave }}" onKeyDown="{{ field.onKeyDown }}" onClick="{{ field.onClick }}" style-focus="outline:2px solid #3975EE;outline-offset:-2px;" style="display:flex;flex-direction:column;gap:6px;padding:clamp(12px,1.05vw,16px) clamp(14px,2vw,26px);box-shadow:inset 3px 0 0 {{ field.barColor }},inset 0 -1px 0 #EDEFF2;background:{{ field.rowBg }};cursor:pointer;transition:background 150ms ease;">
+            <div data-testid="field-row" data-field="{{ field.name }}" data-flag="{{ field.flag }}" tabIndex="0" role="button" aria-label="{{ field.ariaLabel }}" onMouseEnter="{{ field.onEnter }}" onMouseLeave="{{ field.onLeave }}" onFocus="{{ field.onEnter }}" onBlur="{{ field.onLeave }}" onKeyDown="{{ field.onKeyDown }}" onClick="{{ field.onClick }}" style-focus="outline:2px solid #3975EE;outline-offset:-2px;" style="display:flex;flex-direction:column;gap:6px;padding:clamp(12px,1.05vw,16px) clamp(14px,2vw,26px);box-shadow:inset 3px 0 0 {{ field.barColor }},inset 0 -1px 0 #EDEFF2;background:{{ field.rowBg }};cursor:{{ field.cursor }};transition:background 150ms ease;">
               <div style="display:flex;align-items:baseline;justify-content:space-between;gap:14px;">
                 <span style="font-family:'JetBrains Mono',monospace;font-size:clamp(11.5px,.85vw,12.5px);color:#5A616B;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ field.name }}</span>
                 <span style="font-size:clamp(14px,1vw,15.5px);font-weight:500;letter-spacing:-.01em;color:{{ field.valueColor }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;">{{ field.valueDisplay }}</span>
@@ -108,6 +137,9 @@
               <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;">
                 <span style="font-size:clamp(11.5px,.85vw,12.5px);color:#5A616B;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">{{ field.detail }}</span>
                 <span style="display:flex;align-items:center;gap:10px;flex:none;">
+                  <sc-if value="{{ field.highlightNA }}" hint-placeholder-val="{{ false }}">
+                    <span data-testid="highlight-na" title="No text layer — offsets unavailable" style="font-size:10.5px;font-weight:500;color:#5A616B;letter-spacing:-.005em;background:#F1F3F6;box-shadow:inset 0 0 0 1px #E2E5EA;padding:2px 8px;border-radius:6px;">highlight n/a</span>
+                  </sc-if>
                   <sc-if value="{{ field.showStatus }}" hint-placeholder-val="{{ false }}">
                     <span style="font-size:11px;font-weight:500;color:{{ field.statusColor }};letter-spacing:-.005em;background:{{ field.statusBg }};padding:2px 8px;border-radius:6px;">{{ field.statusLabel }}</span>
                   </sc-if>
@@ -217,7 +249,11 @@ class Component extends DCLogic {
   // behavior, used when `?stub=1` is set or the API is unreachable). `result` holds the live
   // ExtractionResult; everything the UI shows derives from it via window.ChartExtractMap.
   state = { view:'extraction', sample:'pathology', revealed:0, streaming:false, done:false, active:null, pinned:[], showJSON:false, showCaught:false,
-            mode:null, result:null, docText:'', samples:[], evalReport:null, loading:true, apiError:null };
+            mode:null, result:null, docText:'', samples:[], evalReport:null, loading:true, apiError:null,
+            // Split 09 edge states: `simulate` (the dev-hook type read from ?simulate=), `routeBlocked`
+            // (unknown doc-type — extraction halts until a schema is picked), `truncRetry` (the
+            // auto-retry banner is showing), and `collapsed` (ListField group base names hidden).
+            simulate:null, routeBlocked:false, truncRetry:false, collapsed:[], serverProvider:'' };
 
   // Split 08 a11y: every flag carries an icon glyph so color is never the only signal — the chip
   // renders `icon + label` for accepted rows too (color-blind safe; asserted by the a11y suite).
@@ -291,13 +327,20 @@ SMOKING STATUS: Former smoker, quit 2015.`;
   // (health() resolving to {ok:false}) falls back to the inline canned behavior so the .dc.html
   // still opens standalone with no backend.
   boot(){
-    const forceStub = (typeof location !== 'undefined') && /[?&]stub=1\b/.test(location.search || '');
+    const search = (typeof location !== 'undefined' && location.search) || '';
+    const forceStub = /[?&]stub=1\b/.test(search);
+    // Split 09: ?simulate=<type> drives the dev-only edge-state hook (no-op unless the server is in
+    // dev mode). Captured once and threaded through every extract call.
+    const sim = /[?&]simulate=([a-z_]+)/.exec(search);
+    if(sim) this.state.simulate = sim[1];
     if(forceStub || !this.api){ this.setState({ mode:'stub', loading:false }, ()=> this.run()); return; }
     this.api.health().then(h=>{
       if(!h || h.ok === false){ this.setState({ mode:'stub', loading:false }, ()=> this.run()); return; }
+      // `serverProvider` lets the UI show the honest "offline · canned data" chip when the backend
+      // is running on the deterministic stub (no live key), even though the API itself is reachable.
       this.api.samples().then(s=>{
         const list = (s && s.ok === false) ? [] : (s || []);
-        this.setState({ mode:'live', samples:list }, ()=> this.extractCurrent());
+        this.setState({ mode:'live', samples:list, serverProvider: h.provider || '' }, ()=> this.extractCurrent());
       });
     });
   }
@@ -313,10 +356,56 @@ SMOKING STATUS: Former smoker, quit 2015.`;
     const id = this.sampleId();
     const schema = this.state.sample === 'intake' ? 'intake' : 'pathology';
     const docText = this.sampleText(id);
-    this.setState({ loading:true, apiError:null, result:null, revealed:0, streaming:false, done:false, active:null, pinned:[], showJSON:false, docText });
-    this.api.extract({ sampleId:id, schema }).then(r=>{
-      if(!r || r.ok === false){ this.setState({ loading:false, apiError:(r && r.error) || { message:'Extraction failed.' } }); return; }
-      this.setState({ result:r, docText, loading:false }, ()=> this.runReveal());
+    this.setState({ loading:true, apiError:null, routeBlocked:false, truncRetry:false, result:null, revealed:0, streaming:false, done:false, active:null, pinned:[], showJSON:false, docText });
+    const req = { sampleId:id, schema };
+    if(this.state.simulate) req.simulate = this.state.simulate;
+    this.api.extract(req).then(r=> this.handleExtract(r, {}));
+  }
+
+  // Split 09: turn a result (or an error envelope) into the right designed state. Surfaced, never
+  // crashed — each `type` maps to a calm notice; truncation auto-retries once; unknown blocks.
+  handleExtract(r, opts){
+    opts = opts || {};
+    if(r && r.ok === false){
+      const err = r.error || { type:'error', message:'Extraction failed.' };
+      if(err.type === 'truncated' && !opts.retried){
+        // Reflect the provider's bounded headroom retry: show the banner and re-issue ONCE. The
+        // retry drops the simulate hook so it completes (mirrors the real retry returning the full
+        // record) — the UI re-streams the fresh result rather than ever scoring a partial one.
+        const id = this.sampleId(); const schema = this.state.sample === 'intake' ? 'intake' : 'pathology';
+        this.setState({ loading:true, truncRetry:true, apiError:null, result:null });
+        this.api.extract({ sampleId:id, schema }).then(r2=> this.handleExtract(r2, { retried:true }));
+        return;
+      }
+      if(err.type === 'truncated'){
+        // Still truncated after the retry → a final calm notice; never a partial record.
+        this.setState({ loading:false, truncRetry:false, apiError:{ type:'truncated_final', message:"Output truncated again — couldn't complete this extraction.", hint:'try another sample' }, routeBlocked:false });
+        return;
+      }
+      this.setState({ loading:false, truncRetry:false, apiError:err, routeBlocked: err.type === 'unknown_doc_type' });
+      return;
+    }
+    this.setState({ result:r, loading:false, truncRetry:false, apiError:null, routeBlocked:false }, ()=> this.runReveal());
+  }
+
+  // The schema toggle while the route is blocked = the human picking a schema: clear the simulate
+  // hook and the block, then extract for real with the chosen schema (never silently defaults).
+  chooseSchema(sample){
+    this.setState({ simulate:null, routeBlocked:false, sample }, ()=> this.extractCurrent());
+  }
+
+  // Upload a text-layer PDF / .txt through the multipart endpoint. Unsupported files surface the
+  // 415 notice inline; a supported file flows through the normal extract path (and may itself hit
+  // the no-text-layer banner — correct).
+  onUpload(e){
+    const input = e && e.target;
+    const file = input && input.files && input.files[0];
+    if(!file || !this.api || this.state.mode !== 'live') return;
+    const schema = this.state.sample === 'intake' ? 'intake' : 'pathology';
+    this.setState({ loading:true, apiError:null, routeBlocked:false, truncRetry:false, result:null, revealed:0, streaming:false, done:false, docText:'' });
+    this.api.extractFile(file, { schema }).then(r=>{
+      if(input) input.value = '';
+      this.handleExtract(r, {});
     });
   }
 
@@ -510,10 +599,16 @@ SMOKING STATUS: Former smoker, quit 2015.`;
 
   renderVals(){
     const S = this.state;
+    const M = window.ChartExtractMap;
     const gf = this.grounded();
     const active = new Set([...(S.pinned||[]), S.active].filter(Boolean));
     const confColor = c => c>=0.8 ? '#15915B' : c>=0.6 ? '#B07520' : '#5A616B';
     const pillShadow = '0 1px 2px rgba(16,24,40,.10),inset 0 0 0 1px rgba(16,24,40,.02)';
+    const live = S.mode==='live' && S.result && !S.showCaught;
+    // No-text-layer (vision fallback): the engine extracted values but offsets are unavailable, so
+    // the doc highlight is disabled wholesale (§5.2). Misroute: a mostly-ungrounded result (§9).
+    const noTextLayer = live && M.highlightDisabled(S.result);
+    const misrouteHint = live && !noTextLayer && M.isMisrouted(S.result);
 
     const all = gf.map(f=>{
       const fl = this.FLAGS[f.flag];
@@ -541,6 +636,10 @@ SMOKING STATUS: Former smoker, quit 2015.`;
         showStatus: true,
         statusLabel: fl.icon + ' ' + fl.label,
         rowBg: active.has(f.name) ? '#F4F6F9' : 'transparent',
+        // No-text-layer rows can't drive a doc highlight — show the "highlight n/a" affordance and
+        // a default cursor instead of the pointer (honest: hover does nothing in the doc).
+        highlightNA: noTextLayer,
+        cursor: noTextLayer ? 'default' : 'pointer',
         detail, grounded: !isNull,
         confPct: Math.round((f.conf||0)*100)+'%',
         confText: f.conf ? f.conf.toFixed(2) : '',
@@ -592,7 +691,6 @@ SMOKING STATUS: Former smoker, quit 2015.`;
 
     // Live mode draws the footer / JSON / eval from the engine result (via the pure mapper); stub
     // and scripted-caught mode keep today's computed/canned values.
-    const live = S.mode==='live' && S.result && !S.showCaught;
     const footer = live
       ? window.ChartExtractMap.toFooterCounts(S.result)
       : { countsText, cost:'$0.021', latency:'3.4s', pv:'prompt v3', sv:'schema v2', model:'claude-opus-4-8' };
@@ -600,7 +698,29 @@ SMOKING STATUS: Former smoker, quit 2015.`;
     const ev = S.evalReport
       ? window.ChartExtractMap.toEvalView(S.evalReport)
       : { macroF1:'0.95', halluc:'0', routing:'0.95', goldCount:19, evalRows:scriptedEvalRows };
-    const documentBody = S.apiError ? this.errorBody(S.apiError) : this.docBody(gf, active);
+
+    // Document pane body — the §5.2/§7 Banner/Notice variants, each from a real signal: truncation
+    // auto-retry banner, then any error envelope (refusal/unknown/unsupported/missing-key/…) as a
+    // calm notice, then the no-text-layer warning banner, else the normal grounded document.
+    let documentBody;
+    if(S.truncRetry) documentBody = this.noticeBody(M.toNotice({ type:'truncated' }));
+    else if(S.apiError) documentBody = this.noticeBody(M.toNotice(S.apiError));
+    else if(noTextLayer) documentBody = this.noTextLayerBody(gf, active);
+    else documentBody = this.docBody(gf, active);
+
+    // ListField groups (UIUX §5.3): collapsible `name · k of n grounded · m review` headers over
+    // the per-item rows. Collapsing a group hides its items (display only — counts stay full).
+    const collapsed = S.collapsed || [];
+    const listGroups = (live || S.mode==='stub') ? M.toListGroups(gf).map(g=>{
+      const expanded = collapsed.indexOf(g.name) === -1;
+      return { name:g.name, label:g.label, expanded, caret: expanded ? '▾' : '▸',
+        onToggle: ()=> this.setState(s=>{ const c=new Set(s.collapsed); c.has(g.name)?c.delete(g.name):c.add(g.name); return { collapsed:[...c] }; }) };
+    }) : [];
+    const isItemHidden = name => { const m = /^(.+)\[\d+\]$/.exec(name||''); return !!(m && collapsed.indexOf(m[1]) !== -1); };
+    // No field rows while an error / route-block / truncation-retry is showing — the notice owns the
+    // panel; the staged-reveal slice only applies on a real result.
+    const showRows = !S.apiError && !S.routeBlocked && !S.truncRetry;
+    const visibleRows = showRows ? all.slice(0, S.revealed).filter(r=> !isItemHidden(r.name)) : [];
 
     return {
       isExtraction: S.view==='extraction',
@@ -615,11 +735,28 @@ SMOKING STATUS: Former smoker, quit 2015.`;
       intakeBg: S.sample==='intake' ? '#FFFFFF' : 'transparent',
       intakeColor: S.sample==='intake' ? '#15181D' : '#5A616B',
       intakeShadow: S.sample==='intake' ? pillShadow : 'none',
-      setPath: ()=> this.setState(s=> s.sample==='pathology' ? null : { sample:'pathology' }, ()=> this.reload()),
-      setIntake: ()=> this.setState(s=> s.sample==='intake' ? null : { sample:'intake' }, ()=> this.reload()),
-      fields: all.slice(0, S.revealed),
+      // While the route is blocked (unknown doc-type), picking a schema = the human's choice: it
+      // clears the block + simulate hook and re-extracts with that schema (never silently defaults).
+      setPath: ()=> S.routeBlocked ? this.chooseSchema('pathology') : this.setState(s=> s.sample==='pathology' ? null : { sample:'pathology' }, ()=> this.reload()),
+      setIntake: ()=> S.routeBlocked ? this.chooseSchema('intake') : this.setState(s=> s.sample==='intake' ? null : { sample:'intake' }, ()=> this.reload()),
+      goIntake: ()=> this.chooseSchema('intake'),
+      onUpload: (e)=> this.onUpload(e),
+      // Edge-state command-bar furniture (Split 09).
+      routeBlocked: S.routeBlocked,
+      // Honesty furniture: "offline · canned data" when the UI fell back to the inline stub OR the
+      // reachable backend is itself running the deterministic stub provider (no live key).
+      isOffline: S.mode==='stub' || S.serverProvider==='stub',
+      misrouteHint,
+      schemaToggleBg: S.routeBlocked ? '#FAF1E3' : '#F1F3F6',
+      schemaToggleShadow: S.routeBlocked ? 'inset 0 0 0 1px #E6CE9E' : 'inset 0 0 0 1px #E8EAEE',
+      docLayerColor: noTextLayer ? '#80561A' : '#0B6E3F',
+      docLayerDot: noTextLayer ? '#DB7D12' : '#15915B',
+      docLayerLabel: noTextLayer ? 'no text layer' : 'text-layer ready',
+      hasListGroups: listGroups.length > 0,
+      listGroups,
+      fields: visibleRows,
       ghosts: gf.slice(S.revealed).map(d=>({ name:d.name })),
-      hasGhosts: !S.apiError && (S.revealed < gf.length || S.loading),
+      hasGhosts: !S.apiError && !S.routeBlocked && (S.revealed < gf.length || S.loading),
       documentBody,
       showJSON: S.showJSON, jsonText,
       countsText: footer.countsText, modelChip: footer.model, cost: footer.cost, latency: footer.latency, pv: footer.pv, sv: footer.sv,
@@ -645,16 +782,38 @@ SMOKING STATUS: Former smoker, quit 2015.`;
     };
   }
 
-  // A calm inline notice for an error envelope (Split 09 builds the full per-type notices). Keeps
-  // the demo from going blank when the API returns {error:{type,message,hint}}.
-  errorBody(err){
-    err = err || {};
+  // Split 09: the document-pane Banner/Notice variants (UIUX §7). `kind` selects the palette —
+  // warning (amber), info (blue), neutral (grey), error (red) — all "surfaced, never crashed".
+  // Color is never the only signal: each carries a title + body text.
+  NOTICE_STYLE = {
+    warning: { bg:'#FAF1E3', bar:'#B07520', title:'#8A5A14', body:'#6A5320' },
+    info:    { bg:'#EEF4FD', bar:'#2266C9', title:'#1F5BB5', body:'#41566F' },
+    neutral: { bg:'#F1F3F6', bar:'#5A616B', title:'#3C424B', body:'#5A616B' },
+    error:   { bg:'#FBECEB', bar:'#CB4A45', title:'#8A3A36', body:'#7A4340' },
+  };
+
+  noticeBody(notice){
+    notice = notice || {};
+    const s = this.NOTICE_STYLE[notice.kind] || this.NOTICE_STYLE.error;
+    const kids = [
+      React.createElement('div', { key:'t', style:{ fontWeight:600, marginBottom: (notice.body || notice.hint) ? '6px' : 0, color:s.title } }, notice.title || 'Notice'),
+    ];
+    if(notice.body) kids.push(React.createElement('div', { key:'b', style:{ color:s.body } }, notice.body));
+    if(notice.hint) kids.push(React.createElement('div', { key:'h', style:{ color:s.body, marginTop:'6px', fontSize:'12px', opacity:.85 } }, notice.hint));
     return React.createElement('div', {
-      style:{ padding:'18px 20px', borderRadius:'10px', background:'#FBECEB', boxShadow:'inset 0 0 0 1px rgba(203,74,69,.22)',
-        color:'#8A3A36', fontSize:'13px', lineHeight:1.6, fontFamily:"'Schibsted Grotesk',system-ui,sans-serif" },
-    }, [
-      React.createElement('div', { key:'m', style:{ fontWeight:600, marginBottom: err.hint ? '6px' : 0 } }, err.message || 'Something went wrong.'),
-      err.hint ? React.createElement('div', { key:'h', style:{ color:'#B07520' } }, err.hint) : null,
+      'data-testid':'notice', 'data-notice-type': notice.type || '', role:'status',
+      style:{ padding:'16px 18px', borderRadius:'10px', background:s.bg, boxShadow:'inset 3px 0 0 '+s.bar,
+        fontSize:'13px', lineHeight:1.6, fontFamily:"'Schibsted Grotesk',system-ui,sans-serif" },
+    }, kids);
+  }
+
+  // No-text-layer (vision fallback): a full-width warning banner over the doc, then the text best-
+  // effort (no marks — highlighting is honestly disabled). The text still renders for context.
+  noTextLayerBody(gf, active){
+    const banner = this.noticeBody(window.ChartExtractMap.toNotice({ type:'no_text_layer' }));
+    return React.createElement('div', null, [
+      React.createElement('div', { key:'banner' }, banner),
+      React.createElement('div', { key:'doc', style:{ marginTop:'14px' } }, this.docBody(gf, active)),
     ]);
   }
 }

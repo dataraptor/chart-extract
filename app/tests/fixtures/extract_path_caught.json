@@ -10,6 +10,7 @@
       "match_quality": "exact",
       "confidence": 0.96,
       "flag": null,
+      "n_matches": 1,
       "model_value": null
     },
     {
@@ -21,6 +22,7 @@
       "match_quality": "exact",
       "confidence": 0.93,
       "flag": null,
+      "n_matches": 1,
       "model_value": null
     },
     {
@@ -32,6 +34,7 @@
       "match_quality": "exact",
       "confidence": 0.9,
       "flag": null,
+      "n_matches": 1,
       "model_value": null
     },
     {
@@ -43,6 +46,7 @@
       "match_quality": "exact",
       "confidence": 0.95,
       "flag": null,
+      "n_matches": 1,
       "model_value": null
     },
     {
@@ -54,6 +58,7 @@
       "match_quality": "exact",
       "confidence": 0.94,
       "flag": null,
+      "n_matches": 1,
       "model_value": null
     },
     {
@@ -65,6 +70,7 @@
       "match_quality": "exact",
       "confidence": 0.92,
       "flag": null,
+      "n_matches": 1,
       "model_value": null
     },
     {
@@ -76,17 +82,19 @@
       "match_quality": "exact",
       "confidence": 0.93,
       "flag": null,
+      "n_matches": 1,
       "model_value": null
     },
     {
       "name": "margin_status",
       "value": null,
       "source_span": "Margins not assessed on this specimen",
-      "char_start": null,
-      "char_end": null,
+      "char_start": 334,
+      "char_end": 371,
       "match_quality": "exact",
       "confidence": 0.0,
       "flag": "not_assessed",
+      "n_matches": 1,
       "model_value": null
     },
     {
@@ -98,6 +106,7 @@
       "match_quality": "none",
       "confidence": 0.0,
       "flag": "not_grounded",
+      "n_matches": 0,
       "model_value": 2
     }
   ],
@@ -109,6 +118,6 @@
   "schema_version": "v2",
   "model": "claude-opus-4-8",
   "cost_usd": 0.0105,
-  "latency_s": 2.5000044843181968e-06,
+  "latency_s": 2.699999868127634e-06,
   "highlight_available": true
 }

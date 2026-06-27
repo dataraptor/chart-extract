@@ -19,7 +19,7 @@ from pydantic import ValidationError
 
 from chartextract import extract
 
-from . import deps
+from . import deps, simulate
 from .errors import APIError
 from .schemas import EvalSummary, ExtractRequest, HealthResponse, SampleItem
 
@@ -40,7 +40,15 @@ def register_routes(app: FastAPI) -> None:
     @app.post("/api/extract")
     async def post_extract(request: Request) -> JSONResponse:
         """Run the engine over a sample / inline text / uploaded file. Returns the core
-        :class:`~chartextract.ExtractionResult` serialized as-is (200)."""
+        :class:`~chartextract.ExtractionResult` serialized as-is (200).
+
+        The dev-only ``?simulate=<type>`` hook (Split 09, gated by ``CHARTEXTRACT_DEV``) short-
+        circuits with a manufactured edge state — an error envelope or a degraded result — so the
+        UI's designed failure states are exercisable offline. Inert in production (see
+        :mod:`chartextract_api.simulate`)."""
+        simulated = simulate.maybe_simulate(request.query_params.get("simulate"))
+        if simulated is not None:
+            return JSONResponse(content=simulated)
         sample_id, text, schema, provider, doc_source, source_name = await _parse_extract_request(
             request
         )
