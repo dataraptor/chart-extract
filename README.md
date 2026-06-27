@@ -1,43 +1,149 @@
 # ChartExtract
 
-A grounded, eval-proven engine that extracts typed clinical fields from documents and **proves
-every value against the source text** — each field carries a verbatim span, computed character
-offsets, a structural confidence, and a flag (`needs_review`, `not_grounded`, `not_found`, …) so a
-reviewer can trust or correct it. The model proposes `{value, source_span, confidence}`; offsets,
-match quality, confidence, and flags are computed in code, never by the model. The build contract
-lives in [`tmp/11-chartextract.md`](tmp/11-chartextract.md) and the UI/UX contract in
+**Turn one messy clinical document into strict, schema-validated JSON where every field carries the
+verbatim source span it came from — and returns `null`, flagged, for anything it can't ground.**
+
+For anyone moving unstructured clinical text (pathology reports, intake forms) into typed records a
+reviewer can trust: the model proposes `{value, source_span, confidence}`; the **character offsets,
+match quality, structural confidence, and flags are all computed in code, never by the model.** A
+value the engine can't find verbatim in the source becomes `null` with a flag (`not_found`,
+`not_assessed`, `not_grounded`, `needs_review`, `ambiguous_span`) — so the demo's headline,
+**hallucination-rate 0**, is structural, not a hope.
+
+## Not the Faithfulness Firewall
+
+ChartExtract **extracts structured data from a source document**. It is *not* a verifier of generated
+answers. **Different input** (a source doc, not a generated answer), **different output** (typed
+records, not a verdict). Lead with *"document → structured schema,"* never *"citations."*
+
+## Architecture
+
+The model never returns offsets. It returns `{value, source_span, confidence}` only; everything that
+makes a value trustworthy is computed deterministically in code (this is load-bearing).
+
+```text
+            ┌──────────────────────────── chartextract.extract() ────────────────────────────┐
+  document  │   load            route           parse            ground-in-code      assemble │
+  (.txt/    │   ───────►        ───────►        ───────►         ──────────────►     ──────►  │  ExtractionResult
+   .pdf/    │   canonical       doc-type        provider call    span match (§7) +   counts,  │  (fields[] with
+   text)    │   text = the      schema          {value,          structural conf +   cost,    │   offsets, flags,
+            │   offset source   (override or     source_span,     flag (§8); invented latency  │   confidence)
+            │                   classifier)      confidence}      values are nulled            │
+            └─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+- **load** — PDF text-layer / text → one canonical string (the single source of character offsets).
+- **route** — a schema override, else a doc-type classifier; an unresolved type is surfaced, never guessed.
+- **parse** — the provider returns `{value, source_span, confidence}` per field (no offsets, ever).
+- **ground-in-code** — a whitespace-tolerant matcher locates each span, scores match quality
+  (`exact=1.0`, `whitespace=0.92`, `prefix=0.5`), derives structural confidence, and assigns the §8
+  flag. A span that doesn't appear in the source → `value=null`, flag `not_grounded`.
+- **assemble** — typed `ExtractionResult`: every field with its offsets/flag/confidence, plus footer
+  counts, priced `$/doc`, and measured latency.
+
+The engine (`core/`) is provider-agnostic; the realized live backend is **Azure OpenAI GPT-5.5**
+(`core/src/chartextract/provider/openai.py`), and a deterministic offline **stub** runs the whole
+pipeline with no key. The thin HTTP adapter (`api/`) serves the engine and the web UI (`app/`)
+same-origin; the eval harness (`eval/`) produces the leaderboard.
+
+## The money demo
+
+One command, no key, under a minute:
+
+```bash
+make demo-stub            # or: python demo.py --stub
+```
+
+It loads a sample, extracts it through the real pipeline, prints the field table, **spotlights the
+honest nulls**, and runs the offline eval leaderboard. The same story in the browser:
+
+| Hero hover — value ↔ source span | The two honest nulls |
+|---|---|
+| ![hero hover](docs/screenshots/01-extraction-hero-hover.png) | ![two honest nulls](docs/screenshots/02-two-honest-nulls.png) |
+
+| The not_grounded catch (what the model *said*, rejected) | Eval leaderboard — hallucination-rate 0 |
+|---|---|
+| ![not grounded](docs/screenshots/03-not-grounded-caught.png) | ![eval leaderboard](docs/screenshots/04-eval-leaderboard.png) |
+
+More frames: [extraction streaming state](docs/screenshots/05-streaming-state.png) ·
+[ListField intake](docs/screenshots/06-listfield-intake.png) ·
+[no-text-layer banner](docs/screenshots/07-no-text-layer-banner.png) ·
+[narrow / stacked](docs/screenshots/08-narrow-stacked.png).
+
+What the stub demo prints (the pathology sample) — both nulls distinctly flagged, hallucination-rate 0:
+
+```text
+margin_status         ->  null   [not_assessed]
+    the document explicitly says it was not assessed - a cited absence
+    cited sentence: "Margins not assessed on this specimen"
+lymph_nodes_positive  ->  null   [not_found]
+    the model found nothing to extract - returned null, not a guess
+
+  HALLUCINATION-RATE  0.00  (0 hallucinated / 22 null-gold fields)  <<< 0 across the frozen set
+```
+
+## Quickstart
+
+```bash
+make install              # editable: core (+ provider SDKs) + eval + api + dev tooling
+make demo-stub            # the offline money demo — no key, no network, $0, deterministic
+make test                 # the Tier-1 (no-key) suite
+```
+
+Then see it in the browser (the API serves the UI at the same origin — no CORS to configure):
+
+```bash
+make serve                # chartextract-api → http://127.0.0.1:8000/
+# or, with one command incl. the browser:
+python demo.py --stub --open
+```
+
+Or via Docker (no local Python setup; defaults to the stub, **no secret in the image**):
+
+```bash
+make docker-build && make docker-up      # open http://localhost:8000/
+```
+
+### Running live (optional, opt-in, costs money)
+
+Copy [`.env.example`](.env.example) to `.env` and set `AZURE_OPENAI_ENDPOINT` +
+`AZURE_OPENAI_API_KEY` (or `OPENAI_API_KEY` for api.openai.com). Then:
+
+```bash
+python demo.py --live                     # live extraction + real cost/latency
+chartextract extract examples/path_report.txt   # CLI auto-selects live when a key is set
+```
+
+With no key, `--live` prints a fallback note and runs the offline stub — never a traceback. The
+`@pytest.mark.api` conformance tests need a key and auto-skip without one, so the free Tier-1 suite
+always passes.
+
+## Eval
+
+The leaderboard is reproducible offline against a frozen synthetic gold set:
+
+```bash
+make eval                 # python -m eval.run --provider stub --no-write
+python -m eval.run --provider stub        # also writes docs/eval/leaderboard-<date>.{jsonl,txt}
+python -m eval.run --provider openai      # live GPT-5.5 sweep (needs a key, opt-in)
+```
+
+It scores per-field precision/recall/F1, macro-F1, **hallucination-rate** (a non-null value where the
+gold is null, counted loudly), routing accuracy, and a per-doc cost comparison.
+
+> **Honesty caption.** The gold set is small and **synthetic — never real PHI**; report F1 with wide
+> intervals (run `--repeats N` to see the spread). **ChartExtract is not a medical device** — it is a
+> demonstration. The Sonnet cost row is the spec's estimate (the measured row lands in a later cost pass).
+
+## Layout
+
+```text
+core/    the chartextract engine (schemas, load, grounding, confidence, router, pipeline, providers, CLI)
+api/     thin FastAPI adapter over core.extract; serves app/ same-origin (+ Dockerfile)
+app/     the web UI (wired to the API), Playwright e2e / a11y / responsive suite
+eval/    field-level eval harness + frozen gold set + normalizers
+examples/ path_report.txt, intake_form.txt   demo.py  Makefile  docker-compose.yml
+```
+
+The build contract is [`tmp/11-chartextract.md`](tmp/11-chartextract.md); the UI/UX contract is
 [`app/ChartExtract-UIUX-Spec.md`](app/ChartExtract-UIUX-Spec.md).
-
-The Python engine lives in [`core/`](core/). Install it editable with `make install`
-(`pip install -e "core/[dev]"`) and run the test suite with `make test`.
-
-## Running live (optional)
-
-By default the CLI runs fully offline on a deterministic stub — no key, no network, `$0`:
-
-```bash
-chartextract extract examples/path_report.txt
-```
-
-The **live** backend is Azure OpenAI **GPT-5.5** (`provider/openai.py`). Copy
-[`.env.example`](.env.example) to `.env`, set `AZURE_OPENAI_ENDPOINT` + `AZURE_OPENAI_API_KEY`
-(or `OPENAI_API_KEY` for api.openai.com), export them, and the CLI auto-selects the live provider
-(use `--stub` to force offline). **Live calls are opt-in and cost money.** The `@pytest.mark.api`
-conformance tests need a key and auto-skip without one, so the free Tier-1 suite always passes.
-
-## Run the real UI
-
-The web UI in [`app/`](app/) is wired to the live engine. Install and serve the API (it serves the
-UI at the same origin, so there's no CORS to configure):
-
-```bash
-make install-api      # pip install -e "core/[providers]" and "api/[eval]"
-chartextract-api      # serves the UI + API at http://localhost:8000/
-```
-
-Open <http://localhost:8000/>. With no key it runs the deterministic **stub** (every value real,
-`$0`); with a key set it runs **live GPT-5.5**. The page fetches `/api/samples`, `/api/extract`,
-and `/api/eval` — the document text, field values, spans, offsets, flags, confidence, counts, cost,
-and the eval leaderboard all come from the engine. Append `?stub=1` (or open `app/ChartExtract.dc.html`
-with no server) to fall back to the inline canned data for a no-backend preview. Full demo
-orchestration (a one-command launch + Docker) lands later; this is enough to see it live.

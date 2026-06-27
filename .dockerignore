@@ -1,0 +1,14 @@
+# Keep the build context lean and secret-free.
+.env
+.git
+tmp/
+**/node_modules/
+**/test-results/
+**/playwright-report/
+app/uploads/
+**/__pycache__/
+**/*.egg-info/
+**/.pytest_cache/
+**/.ruff_cache/
+.coverage
+docs/screenshots/

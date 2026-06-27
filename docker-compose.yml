@@ -1,0 +1,20 @@
+# ChartExtract - one-command local Docker deploy (engine + API + static UI on one port).
+#
+#   docker compose up --build                # offline stub by default (no key, no model calls)
+#   docker compose up --build  # with a .env  # live - reads the provider key from .env (if present)
+#
+# Then open http://localhost:8000/  (set HOST_PORT to remap, e.g. HOST_PORT=9000 docker compose up).
+services:
+  chartextract:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    image: chartextract:latest
+    ports:
+      - "${HOST_PORT:-8000}:8000"
+    # Provider keys come from .env at runtime (never baked into the image). With no .env the app
+    # still loads and serves the deterministic stub - no key required.
+    env_file:
+      - path: .env
+        required: false
+    restart: unless-stopped
