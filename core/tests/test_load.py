@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from chartextract import LoadedDoc, load
+from chartextract import LoadedDoc, from_text, load
 
 # --- loading the shipped example --------------------------------------------
 
@@ -74,6 +74,33 @@ def test_long_single_line_string_is_inline() -> None:
     doc = load(body)
     assert doc.text == body
     assert doc.has_text_layer is True
+
+
+# --- from_text(): force inline, bypassing the path heuristic ----------------
+
+
+def test_from_text_treats_short_single_line_as_body() -> None:
+    # A short single-line string that load() would read as a (missing) path is unambiguously a
+    # document body when the caller already knows it's inline.
+    doc = from_text("chest pain")
+    assert isinstance(doc, LoadedDoc)
+    assert doc.text == "chest pain"
+    assert doc.has_text_layer is True
+    assert doc.source_name == "inline"
+    assert doc.n_chars == len("chest pain")
+
+
+def test_from_text_normalizes_newlines() -> None:
+    doc = from_text("a\r\nb", source_name="memo")
+    assert doc.text == "a\nb"
+    assert doc.source_name == "memo"
+
+
+def test_load_passes_through_a_loaded_doc() -> None:
+    # load() is idempotent on a LoadedDoc, so a pre-loaded inline body can flow straight into
+    # extract() without re-running the path heuristic.
+    doc = from_text("chest pain")
+    assert load(doc) is doc
 
 
 # --- offset invariant + idempotence -----------------------------------------

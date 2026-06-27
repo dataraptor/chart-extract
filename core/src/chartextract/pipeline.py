@@ -18,7 +18,7 @@ from pathlib import Path
 
 from .cost import price
 from .grounding import ground_fields
-from .load import load
+from .load import LoadedDoc, load
 from .prompts import EXTRACTION_SYSTEM, PROMPT_VERSION, extraction_user_content
 from .provider.base import ProviderClient
 from .router import route
@@ -29,7 +29,7 @@ _REVIEW_FLAGS = frozenset({"needs_review", "ambiguous_span"})
 
 
 def extract(
-    doc: str | Path,
+    doc: str | Path | LoadedDoc,
     *,
     schema: str | None = None,
     provider: ProviderClient,
@@ -39,7 +39,8 @@ def extract(
 
     Steps:
 
-    1. **load** ``doc`` (a path or inline text) into canonical text — the single offset source.
+    1. **load** ``doc`` (a path, inline text, or a pre-built :class:`LoadedDoc`) into canonical
+       text — the single offset source.
     2. **route** to a schema: ``schema`` override, else the provider's classifier. An unresolved
        type raises :class:`~chartextract.router.UnknownDocTypeError`.
     3. **extract** via the provider (timed) → a parsed schema instance + :class:`Usage`.

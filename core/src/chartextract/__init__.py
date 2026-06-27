@@ -45,7 +45,7 @@ from .cost import (
     price_batch,
 )
 from .grounding import SpanMatch, ground, ground_fields
-from .load import LoadedDoc, load
+from .load import LoadedDoc, from_text, load
 from .pipeline import extract
 from .prompts import PROMPT_VERSION
 from .provider import default_provider, live_key_present
@@ -83,6 +83,7 @@ __all__ = [
     "ExtractionResult",
     "LoadedDoc",
     "load",
+    "from_text",
     "SCHEMAS",
     "SCHEMA_VERSION",
     "field_names",

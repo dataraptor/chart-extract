@@ -17,7 +17,8 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
-from chartextract import extract
+from chartextract import extract, from_text
+from chartextract.load import LoadedDoc
 
 from . import deps, simulate
 from .errors import APIError
@@ -92,7 +93,7 @@ def register_routes(app: FastAPI) -> None:
 
 async def _parse_extract_request(
     request: Request,
-) -> tuple[str | None, str | None, str | None, str | None, str | Path, str | None]:
+) -> tuple[str | None, str | None, str | None, str | None, str | Path | LoadedDoc, str | None]:
     """Resolve a request into ``(sample_id, text, schema, provider, doc_source, source_name)``.
 
     Exactly one of ``sample_id`` / ``text`` / uploaded ``file`` must be provided. ``doc_source`` is
@@ -107,7 +108,7 @@ async def _parse_extract_request(
 
 async def _parse_json(
     request: Request,
-) -> tuple[str | None, str | None, str | None, str | None, str | Path, str | None]:
+) -> tuple[str | None, str | None, str | None, str | None, str | Path | LoadedDoc, str | None]:
     raw = await request.body()
     try:
         payload = json.loads(raw) if raw else {}
@@ -124,14 +125,17 @@ async def _parse_json(
     if req.sample_id is not None:
         doc_text = deps.sample_text(req.sample_id)
         return req.sample_id, None, req.schema_override, req.provider, doc_text, req.sample_id
-    # inline text
+    # Inline text: wrap it as a LoadedDoc so the engine treats it as a document body verbatim. A
+    # short single-line note (e.g. "chest pain") is unambiguously content here, so `load()`'s
+    # path-vs-inline heuristic must not misread it as a missing file path (which would 500).
     _reject_oversized_text(req.text)
-    return None, req.text, req.schema_override, req.provider, req.text or "", "inline"
+    inline = from_text(req.text or "", source_name="inline")
+    return None, req.text, req.schema_override, req.provider, inline, "inline"
 
 
 async def _parse_multipart(
     request: Request,
-) -> tuple[str | None, str | None, str | None, str | None, str | Path, str | None]:
+) -> tuple[str | None, str | None, str | None, str | None, str | Path | LoadedDoc, str | None]:
     form = await request.form()
     upload = form.get("file")
     sample_id = _form_str(form.get("sample_id"))
@@ -174,7 +178,8 @@ async def _parse_multipart(
     if sample_id is not None:
         return sample_id, None, schema, provider, deps.sample_text(sample_id), sample_id
     _reject_oversized_text(text)
-    return None, text, schema, provider, text or "", "inline"
+    inline = from_text(text or "", source_name="inline")
+    return None, text, schema, provider, inline, "inline"
 
 
 def _too_large(n: int) -> APIError:

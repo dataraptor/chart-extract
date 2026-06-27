@@ -70,6 +70,25 @@ def test_routing_unknown_returns_409(client: TestClient) -> None:
     assert body["error"]["type"] == "unknown_doc_type"
 
 
+def test_short_single_line_inline_text_is_not_treated_as_a_path(client: TestClient) -> None:
+    # A short, single-line paste ("chest pain") is a document body, not a file path. It must route
+    # through the engine (here: unclassifiable → 409), never surface load()'s path heuristic as a
+    # 500 internal error. Regression for the inline-text-vs-path misread.
+    resp = client.post("/api/extract", json={"text": "chest pain"})
+    assert resp.status_code == 409
+    assert resp.json()["error"]["type"] == "unknown_doc_type"
+
+
+def test_short_single_line_inline_text_with_schema_extracts(client: TestClient) -> None:
+    # The same short single-line input, with an explicit schema, extracts cleanly (200) instead of
+    # erroring — proof the body reaches the pipeline as text.
+    resp = client.post(
+        "/api/extract", json={"text": "Left breast core biopsy", "schema": "pathology"}
+    )
+    assert resp.status_code == 200
+    assert resp.json()["doc_type"] == "pathology"
+
+
 def test_schema_override_bypasses_classifier(client: TestClient) -> None:
     # The same inline text, but with an explicit schema → routed without the classifier.
     resp = client.post(

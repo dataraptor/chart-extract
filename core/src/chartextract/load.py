@@ -68,11 +68,31 @@ def _looks_like_inline_text(value: str) -> bool:
     return "\n" in value or "\r" in value or len(value) >= _INLINE_MIN_LEN
 
 
-def load(path_or_text: str | Path, *, source_name: str | None = None) -> LoadedDoc:
+def from_text(text: str, *, source_name: str = "inline") -> LoadedDoc:
+    """Wrap a string as inline canonical text, **bypassing the path heuristic** in :func:`load`.
+
+    Callers that already know their input is a document body — e.g. the HTTP adapter's inline
+    ``text`` field, where a short single-line note like ``"chest pain"`` is unambiguously content,
+    not a mistyped path — use this so :func:`load`'s file-vs-inline guess never misfires. The only
+    normalization is the canonical newline pass; ``len(text) == n_chars`` still holds.
+    """
+    normalized = _normalize_newlines(text)
+    return LoadedDoc(
+        text=normalized,
+        source_name=source_name,
+        has_text_layer=True,
+        n_chars=len(normalized),
+    )
+
+
+def load(path_or_text: str | Path | LoadedDoc, *, source_name: str | None = None) -> LoadedDoc:
     """Load a document into a :class:`LoadedDoc` with canonical text and offset invariants.
 
     Dispatch (explicit, never ambiguous):
 
+    * an already-loaded :class:`LoadedDoc` → returned unchanged (idempotent pass-through, so a
+      caller that pre-loaded inline text via :func:`from_text` can hand it straight to
+      :func:`~chartextract.extract`);
     * a :class:`~pathlib.Path`, or a ``str`` naming an existing file → loaded from disk;
     * a ``.pdf`` file → text layer extracted via ``pypdf`` (``has_text_layer=False`` if empty);
     * any other file → read as UTF-8 text;
@@ -83,6 +103,8 @@ def load(path_or_text: str | Path, *, source_name: str | None = None) -> LoadedD
     Line endings are normalized to ``\\n`` exactly once; the returned ``text`` is never mutated
     afterward, so ``len(text) == n_chars`` and ``text[a:b]`` is meaningful for any later offsets.
     """
+    if isinstance(path_or_text, LoadedDoc):
+        return path_or_text
     if isinstance(path_or_text, Path):
         return _load_path(path_or_text, source_name)
 

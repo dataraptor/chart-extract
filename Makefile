@@ -7,14 +7,15 @@
 # --- Install ----------------------------------------------------------------
 
 # Install the whole stack editable: engine (+ provider SDKs), eval, API, with dev tooling.
+# Every package gets its [dev] extra so `make cov`/`make lint` (pytest-cov, ruff) work after install.
 install:
 	pip install -e "core/[providers,dev]"
-	pip install -e "eval/"
+	pip install -e "eval/[dev]"
 	pip install -e "api/[dev]"
 
 # Install just the HTTP adapter (and the eval extra for /api/eval) editable.
 install-api:
-	pip install -e "eval/"
+	pip install -e "eval/[dev]"
 	pip install -e "api/[dev]"
 
 # --- Test / quality ---------------------------------------------------------
