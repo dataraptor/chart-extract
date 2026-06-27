@@ -76,7 +76,16 @@ def register_routes(app: FastAPI) -> None:
             text if text is not None else (doc_source if isinstance(doc_source, str) else "")
         )
         provider_obj = deps.get_provider(provider, text=guess_text, schema=schema)
-        result = extract(doc_source, schema=schema, provider=provider_obj, source_name=source_name)
+        try:
+            result = extract(
+                doc_source, schema=schema, provider=provider_obj, source_name=source_name
+            )
+        finally:
+            # An uploaded file is the only case `doc_source` is a `Path` (a temp file written by
+            # `_parse_multipart`); samples and inline text resolve to str/LoadedDoc. Always unlink
+            # it so a successful or failing upload never leaks a temp file (disk-fill DoS).
+            if isinstance(doc_source, Path):
+                doc_source.unlink(missing_ok=True)
         # `highlight_available` is already a field on ExtractionResult — it round-trips here so the
         # Split 09 banner can read it (the no-text-layer signal from Split 03).
         return JSONResponse(content=result.model_dump())

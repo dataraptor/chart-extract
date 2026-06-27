@@ -108,7 +108,7 @@
             <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#5A616B;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Extraction &middot; {{ schemaName }}</span>
             <span style="flex:none;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.04em;color:#2266C9;background:#EEF4FD;padding:3px 7px;border-radius:6px;">routed auto 0.92</span>
             <sc-if value="{{ misrouteHint }}" hint-placeholder-val="{{ false }}">
-              <button data-testid="misroute-hint" onClick="{{ goIntake }}" title="Re-extract with the intake schema" style="flex:none;border:none;cursor:pointer;font-size:10.5px;letter-spacing:.01em;color:#8A5A14;background:#FAF1E3;box-shadow:inset 0 0 0 1px #E6CE9E;padding:3px 8px;border-radius:6px;">looks misrouted &mdash; change schema?</button>
+              <button data-testid="misroute-hint" onClick="{{ goIntake }}" title="Re-extract with the other schema" style="flex:none;border:none;cursor:pointer;font-size:10.5px;letter-spacing:.01em;color:#8A5A14;background:#FAF1E3;box-shadow:inset 0 0 0 1px #E6CE9E;padding:3px 8px;border-radius:6px;">looks misrouted &mdash; change schema?</button>
             </sc-if>
           </span>
           <span style="display:flex;gap:7px;flex:none;">
@@ -185,7 +185,7 @@
         <div style="flex:1 1 200px;background:#FFFFFF;border-radius:13px;padding:clamp(18px,1.7vw,24px);box-shadow:inset 0 0 0 1px #E8EAEE;">
           <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#5A616B;text-transform:uppercase;margin-bottom:13px;">Macro-F1</div>
           <div style="font-size:clamp(32px,3.2vw,46px);font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:#15181D;line-height:1;" data-testid="eval-macro-f1">{{ macroF1 }}</div>
-          <div style="font-size:12px;color:#5A616B;margin-top:9px;">frozen gold &middot; {{ goldCount }} docs &middot; N=5 runs</div>
+          <div style="font-size:12px;color:#5A616B;margin-top:9px;">frozen gold &middot; {{ goldCount }} docs &middot; N={{ evalRuns }} runs</div>
         </div>
         <div style="flex:1 1 200px;background:#FFFFFF;border-radius:13px;padding:clamp(18px,1.7vw,24px);box-shadow:inset 0 0 0 1px rgba(21,145,91,.28);animation:ceRing 1.8s ease 1;">
           <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#0B6E3F;text-transform:uppercase;margin-bottom:13px;">Hallucination rate</div>
@@ -216,17 +216,15 @@
 
       <div style="background:#FFFFFF;border-radius:13px;padding:clamp(18px,1.7vw,24px);box-shadow:inset 0 0 0 1px #E8EAEE;">
         <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#5A616B;margin-bottom:15px;">Cost &times; accuracy</div>
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;padding-bottom:14px;box-shadow:inset 0 -1px 0 #EDEFF2;">
-          <span style="font-size:14px;font-weight:500;letter-spacing:-.01em;color:#15181D;">Opus 4.8 <span style="color:#5A616B;font-size:11.5px;font-weight:400;">headline</span></span>
-          <span style="display:flex;gap:22px;font-family:'JetBrains Mono',monospace;font-size:13px;"><span style="color:#5A616B;">F1 0.94</span><span style="color:#15181D;">$0.021/doc</span></span>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;padding-top:14px;">
-          <span style="font-size:14px;font-weight:500;letter-spacing:-.01em;color:#15181D;">Sonnet 4.6 <span style="color:#5A616B;font-size:11.5px;font-weight:400;">cost row</span></span>
-          <span style="display:flex;gap:22px;font-family:'JetBrains Mono',monospace;font-size:13px;"><span style="color:#5A616B;">F1 0.90</span><span style="color:#15181D;">$0.011/doc</span><span style="color:#0B6E3F;">&darr;48%</span></span>
-        </div>
+        <sc-for list="{{ evalCost }}" as="c" hint-placeholder-count="2">
+          <div data-testid="eval-cost-row" style="display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 0;box-shadow:inset 0 -1px 0 #EDEFF2;">
+            <span style="font-size:14px;font-weight:500;letter-spacing:-.01em;color:#15181D;">{{ c.label }} <span style="color:#5A616B;font-size:11.5px;font-weight:400;">{{ c.basis }}</span></span>
+            <span style="display:flex;gap:22px;font-family:'JetBrains Mono',monospace;font-size:13px;"><span style="color:#5A616B;">F1 {{ c.f1 }}</span><span style="color:#15181D;">{{ c.usd }}</span><span style="color:#0B6E3F;">{{ c.deltaText }}</span></span>
+          </div>
+        </sc-for>
       </div>
 
-      <span style="font-size:12px;color:#5A616B;line-height:1.65;max-width:680px;">{{ goldCount }} synthetic documents &mdash; report F1 with wide confidence intervals on this small gold set. Synthetic or public documents only, never real PHI.</span>
+      <span data-testid="eval-caption" style="font-size:12px;color:#5A616B;line-height:1.65;max-width:680px;">{{ evalCaption }}</span>
     </div>
   </div>
   </sc-if>
@@ -698,7 +696,13 @@ SMOKING STATUS: Former smoker, quit 2015.`;
     const jsonText = live ? window.ChartExtractMap.toJsonText(S.result) : this.jsonText(gf);
     const ev = S.evalReport
       ? window.ChartExtractMap.toEvalView(S.evalReport)
-      : { macroF1:'0.95', halluc:'0', routing:'0.95', goldCount:19, evalRows:scriptedEvalRows };
+      : { macroF1:'0.95', halluc:'0', routing:'0.95', goldCount:19, evalRows:scriptedEvalRows,
+          nRuns:5,
+          caption:'19 synthetic documents — report F1 with wide confidence intervals on this small gold set. Synthetic or public documents only, never real PHI.',
+          cost:[
+            { model:'claude-opus-4-8', label:'Opus 4.8', f1:'0.94', usd:'$0.021/doc', delta:null, deltaText:'', measured:false, basis:'estimate' },
+            { model:'claude-sonnet-4-6', label:'Sonnet 4.6', f1:'0.90', usd:'$0.011/doc', delta:'48%', deltaText:'↓48%', measured:false, basis:'estimate' },
+          ] };
 
     // Document pane body — the §5.2/§7 Banner/Notice variants, each from a real signal: truncation
     // auto-retry banner, then any error envelope (refusal/unknown/unsupported/missing-key/…) as a
@@ -740,7 +744,9 @@ SMOKING STATUS: Former smoker, quit 2015.`;
       // clears the block + simulate hook and re-extracts with that schema (never silently defaults).
       setPath: ()=> S.routeBlocked ? this.chooseSchema('pathology') : this.setState(s=> s.sample==='pathology' ? null : { sample:'pathology' }, ()=> this.reload()),
       setIntake: ()=> S.routeBlocked ? this.chooseSchema('intake') : this.setState(s=> s.sample==='intake' ? null : { sample:'intake' }, ()=> this.reload()),
-      goIntake: ()=> this.chooseSchema('intake'),
+      // The misroute nudge re-extracts with the OTHER schema (a pathology-looking result viewed
+      // under the intake schema should offer pathology, and vice-versa) — never blindly intake.
+      goIntake: ()=> this.chooseSchema(S.sample==='intake' ? 'pathology' : 'intake'),
       onUpload: (e)=> this.onUpload(e),
       // Edge-state command-bar furniture (Split 09).
       routeBlocked: S.routeBlocked,
@@ -763,6 +769,7 @@ SMOKING STATUS: Former smoker, quit 2015.`;
       countsText: footer.countsText, modelChip: footer.model, cost: footer.cost, latency: footer.latency, pv: footer.pv, sv: footer.sv,
       costTip: (footer.tokens && footer.tokens.text) || '',
       evalRows: ev.evalRows, macroF1: ev.macroF1, halluc: ev.halluc, routing: ev.routing, goldCount: ev.goldCount,
+      evalRuns: ev.nRuns, evalCaption: ev.caption, evalCost: ev.cost,
       extBg: S.view==='extraction' ? '#FFFFFF' : 'transparent',
       extColor: S.view==='extraction' ? '#15181D' : '#5A616B',
       extShadow: S.view==='extraction' ? pillShadow : 'none',

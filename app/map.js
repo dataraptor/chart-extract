@@ -177,6 +177,15 @@
 
   // ---- eval leaderboard ----------------------------------------------------
 
+  /** Short, human display name for a cost-row model id (the raw id is too noisy for the leaderboard). */
+  var COST_MODEL_LABEL = {
+    "claude-opus-4-8": "Opus 4.8",
+    "claude-sonnet-4-6": "Sonnet 4.6",
+    "claude-haiku-4-5-20251001": "Haiku 4.5",
+    "gpt-5.5": "GPT-5.5",
+    "stub-model": "stub",
+  };
+
   /** `EvalSummary` (/api/eval) → the exact strings the existing leaderboard markup binds to. */
   function toEvalView(report) {
     report = report || {};
@@ -193,9 +202,13 @@
     var cost = (report.cost || []).map(function (c) {
       return {
         model: c.model,
+        label: COST_MODEL_LABEL[c.model] || c.model,
         f1: Number(c.f1 || 0).toFixed(2),
         usd: fmtCost(c.usd_per_doc) + "/doc",
         delta: c.delta != null ? Math.round(c.delta) + "%" : null,
+        // Pre-rendered so the leaderboard markup binds a plain string (no per-row conditional):
+        // "↓40%" for a cheaper row, "" otherwise.
+        deltaText: c.delta != null ? "↓" + Math.round(c.delta) + "%" : "",
         // measured-vs-estimated honesty (Split 11): a real sweep vs a priced reference row.
         measured: !!c.measured,
         basis: c.measured ? "measured" : "estimate",
@@ -206,6 +219,10 @@
       halluc: fmtRate(report.hallucination_rate),
       routing: Number(report.routing_accuracy || 0).toFixed(2),
       goldCount: report.gold_count || 0,
+      // N=runs and the distributional-honesty caption come straight from the API — never hardcoded
+      // in the markup (the served leaderboard must reflect the real sweep, not a frozen mock).
+      nRuns: report.n_runs || 1,
+      caption: report.caption || "",
       evalRows: rows,
       cost: cost,
     };

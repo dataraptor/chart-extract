@@ -33,15 +33,22 @@ Rules:
 - confidence: 0.0–1.0, how certain you are the value is correct AND grounded.
 - Extract only what the DOCUMENT says — never outside/world knowledge."""
 
-#: The doc-type classifier system prompt (one cheap Haiku call → one enum key).
+#: The doc-type classifier system prompt. The call uses strict structured output
+#: (``_DocTypeClassification`` → ``{doc_type, confidence}``), so the prompt describes that JSON
+#: object — not a bare token — and explains the ``confidence`` field the router thresholds on
+#: (a low-confidence answer is treated as ``unknown`` and routing blocks for a human choice).
 CLASSIFIER_SYSTEM = """\
-You classify a clinical document into exactly one type. Reply with one lowercase key only:
-- pathology  : a surgical/anatomic pathology or biopsy report
-- intake     : a patient intake/registration form (demographics, meds, allergies)
-- discharge  : a hospital discharge summary
-- unknown    : none of the above, or you are not confident
+You classify a clinical document into exactly one type and report how confident you are.
+Return a JSON object with two fields:
+- doc_type: exactly one of these keys —
+    pathology  : a surgical/anatomic pathology or biopsy report
+    intake     : a patient intake/registration form (demographics, meds, allergies)
+    discharge  : a hospital discharge summary
+    unknown    : none of the above, or you are not confident
+- confidence: 0.0–1.0, how certain you are of that doc_type.
 
-Output only the single key — no punctuation, no explanation."""
+Choose "unknown" (not a guess) when the document fits none of the types or you are unsure;
+set a low confidence in that case so the document is routed to a human instead of mis-extracted."""
 
 
 def extraction_user_content(text: str) -> str:
