@@ -16,35 +16,56 @@ verdict). The story is always *document to structured schema*.
 
 ## Architecture
 
-The model never returns offsets. It returns `{value, source_span, confidence}` only; everything that
-makes a value trustworthy is computed deterministically in code (this is load-bearing).
+The model never returns offsets. It returns `{value, source_span, confidence}` only; **everything
+that makes a value trustworthy — character offsets, match quality, structural confidence, and the
+flag — is computed deterministically in code.** That is what makes hallucination-rate 0 structural.
 
-```text
-            ┌──────────────────────────── chartextract.extract() ────────────────────────────┐
-  document  │   load            route           parse            ground-in-code      assemble │
-  (.txt/    │   ───────►        ───────►        ───────►         ──────────────►     ──────►  │  ExtractionResult
-   .pdf/    │   canonical       doc-type        provider call    span match +        counts,  │  (fields[] with
-   text)    │   text = the      schema          {value,          structural conf +   cost,    │   offsets, flags,
-            │   offset source   (override or     source_span,     flag; invented      latency  │   confidence)
-            │                   classifier)      confidence}      values are nulled            │
-            └─────────────────────────────────────────────────────────────────────────────────┘
+🟦 deterministic (code; the only thing ever gated) · 🟨 LLM (proposes `{value, source_span,
+confidence}`, never trusted alone) · 🟥 honesty short-circuit (ungrounded → `null` + flag).
+Full diagrams, the in-process wiring, the grounding decision procedure, and the two-tier CI are in
+[`docs/architecture.md`](docs/architecture.md).
+
+```mermaid
+flowchart LR
+    D([Document<br/>.txt · text-layer .pdf · text]) --> LD["load<br/>canonical text = the offset source"]
+    LD --> RT{"route<br/>override or classifier"}
+    RT -- "unresolved type" --> UK["UnknownDocTypeError<br/>surfaced, never guessed"]
+    RT -- "schema" --> PR["provider.extract<br/>value, source_span, confidence"]
+    PR --> GR["ground<br/>span match → offsets + quality"]
+    GR --> CF{"span found<br/>in source? code"}
+    CF -- "no" --> NG["value := null<br/>flag not_grounded"]
+    CF -- "yes" --> AS["assign flag + confidence<br/>floored by match quality, code"]
+    AS --> OUT([ExtractionResult<br/>fields with offsets · flags · $/doc])
+    NG --> OUT
+    style LD fill:#dbeafe,stroke:#1e40af
+    style RT fill:#dbeafe,stroke:#1e40af
+    style GR fill:#dbeafe,stroke:#1e40af
+    style CF fill:#dbeafe,stroke:#1e40af
+    style AS fill:#dbeafe,stroke:#1e40af
+    style PR fill:#fef9c3,stroke:#a16207
+    style NG fill:#fee2e2,stroke:#b91c1c
+    style UK fill:#fee2e2,stroke:#b91c1c
 ```
 
-- **load** turns a PDF text-layer or plain text into one canonical string (the single source of
-  character offsets).
+- **load** turns a PDF text-layer or plain text into one canonical string — the single source of
+  character offsets; a missing text layer is flagged honestly (highlight disabled, never faked).
 - **route** uses a schema override when given, otherwise a doc-type classifier; an unresolved type
-  is surfaced, never guessed.
-- **parse** asks the provider for `{value, source_span, confidence}` per field (no offsets, ever).
-- **ground-in-code** runs a whitespace-tolerant matcher that locates each span, scores match quality
-  (`exact=1.0`, `whitespace=0.92`, `prefix=0.5`), derives structural confidence, and assigns the
-  flag. A span that doesn't appear in the source becomes `value=null`, flag `not_grounded`.
+  is surfaced as `UnknownDocTypeError`, never guessed.
+- **provider.extract** asks the model for `{value, source_span, confidence}` per field — no offsets,
+  ever.
+- **ground** runs a whitespace-tolerant matcher that locates each span, scores match quality
+  (`exact=1.0`, `whitespace=0.92`, `prefix=0.5`), floors structural confidence by that weight, and
+  assigns the flag. A span that doesn't appear in the source becomes `value=null`, flag
+  `not_grounded` (the rejected proposal is kept on `model_value`).
 - **assemble** builds the typed `ExtractionResult`: every field with its offsets, flag, and
   confidence, plus footer counts, priced `$/doc`, and measured latency.
 
-The engine (`core/`) is provider-agnostic; the realized live backend is **Azure OpenAI GPT-5.5**
-(`core/src/chartextract/provider/openai.py`), and a deterministic offline **stub** runs the whole
-pipeline with no key. The thin HTTP adapter (`api/`) serves the engine and the web UI (`app/`)
-same-origin; the eval harness (`eval/`) produces the leaderboard.
+The engine (`core/`) is a provider-agnostic, importable module; the realized live backend is
+**Azure OpenAI GPT-5.5** (`core/src/chartextract/provider/openai.py`), and a deterministic offline
+**stub** runs the whole pipeline with no key. The thin HTTP adapter (`api/`) and the eval harness
+(`eval/`) both **import `core` in-process** — the eval is parallel-safe because of it. The browser
+UI (`app/`) is the one component that can't import Python, so it talks to `api/` over HTTP; the
+adapter only reshapes what the engine already produced.
 
 ## The money demo
 
@@ -150,4 +171,7 @@ eval/    field-level eval harness + frozen gold set + normalizers
 examples/ path_report.txt, intake_form.txt   demo.py  Makefile  docker-compose.yml
 ```
 
-The UI/UX design specification is [`app/ChartExtract-UIUX-Spec.md`](app/ChartExtract-UIUX-Spec.md).
+The full architecture — in-process wiring, the pipeline stage by stage, the grounding decision
+procedure, data contracts, the provider seam, and the two-tier CI — is in
+[`docs/architecture.md`](docs/architecture.md). The UI/UX design specification is
+[`app/ChartExtract-UIUX-Spec.md`](app/ChartExtract-UIUX-Spec.md).
