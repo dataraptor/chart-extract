@@ -118,6 +118,9 @@
   "schema_version": "v2",
   "model": "claude-opus-4-8",
   "cost_usd": 0.0105,
-  "latency_s": 1.8000000636675395e-06,
+  "latency_s": 1.7999991541728377e-06,
+  "input_tokens": 1200,
+  "output_tokens": 180,
+  "cache_read_tokens": 0,
   "highlight_available": true
 }

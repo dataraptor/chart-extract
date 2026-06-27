@@ -80,6 +80,9 @@ class EvalCostRow(BaseModel):
     f1: float
     usd_per_doc: float
     delta: float | None = None
+    #: True only for a row priced from a real measured sweep; the Anthropic comparison rows are
+    #: estimates (Split 11). Lets the Eval view label measured-vs-estimated without re-deriving it.
+    measured: bool = False
 
 
 class EvalSummary(BaseModel):

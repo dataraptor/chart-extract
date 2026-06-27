@@ -6,7 +6,42 @@ import math
 
 import pytest
 
-from chartextract import PRICING, Usage, price
+from chartextract import BATCH_DISCOUNT, PRICING, Usage, price, price_batch
+
+
+def test_pricing_reconciled_with_claude_api_reference():
+    # Split 11: pricing pinned against the claude-api skill. Per MTok (input / output).
+    assert PRICING["claude-opus-4-8"] == {"input": 5 / 1e6, "output": 25 / 1e6}
+    assert PRICING["claude-sonnet-4-6"] == {"input": 3 / 1e6, "output": 15 / 1e6}
+    # Haiku corrected from the Split 03/04 placeholder $0.80/$4 → $1.00/$5.00 (reference wins).
+    assert PRICING["claude-haiku-4-5-20251001"] == {"input": 1.00 / 1e6, "output": 5 / 1e6}
+    assert PRICING["gpt-5.5"] == {"input": 1.25 / 1e6, "output": 10 / 1e6}
+
+
+def test_no_stale_haiku_todo_value():
+    # The wrong 0.80 input rate must be gone (gate row 7: Split 03/04 TODOs resolved).
+    assert PRICING["claude-haiku-4-5-20251001"]["input"] != 0.80 / 1e6
+
+
+def test_batch_discount_is_half():
+    assert BATCH_DISCOUNT == 0.5
+
+
+def test_price_batch_is_half_of_sync():
+    usage = Usage(input_tokens=1200, output_tokens=180)
+    assert math.isclose(price_batch(usage, "gpt-5.5"), price(usage, "gpt-5.5") * 0.5, rel_tol=1e-9)
+
+
+def test_sonnet_cost_delta_vs_opus_is_correct():
+    # The UIUX §5.5 "down N% cost" delta: Sonnet vs Opus on the same reference usage.
+    usage = Usage(input_tokens=1200, output_tokens=180)
+    opus = price(usage, "claude-opus-4-8")
+    sonnet = price(usage, "claude-sonnet-4-6")
+    delta_pct = 100.0 * (opus - sonnet) / opus
+    # opus = 1200*5 + 180*25 = 10500e-6 = 0.0105 ; sonnet = 1200*3 + 180*15 = 6300e-6 = 0.0063
+    assert math.isclose(opus, 0.0105, rel_tol=1e-9)
+    assert math.isclose(sonnet, 0.0063, rel_tol=1e-9)
+    assert math.isclose(delta_pct, 40.0, rel_tol=1e-9)
 
 
 def test_price_opus_matches_hand_computed():

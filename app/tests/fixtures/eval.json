@@ -123,13 +123,15 @@
       "model": "claude-opus-4-8",
       "f1": 1.0,
       "usd_per_doc": 0.0105,
-      "delta": null
+      "delta": null,
+      "measured": false
     },
     {
       "model": "claude-sonnet-4-6",
       "f1": 1.0,
       "usd_per_doc": 0.0063,
-      "delta": 40.0
+      "delta": 40.0,
+      "measured": false
     }
   ],
   "caption": "15 synthetic docs (N=1); hallucination-rate 0.00 (0 hallucinated / 22 null-gold fields); report F1 with wide intervals \u2014 not real PHI."

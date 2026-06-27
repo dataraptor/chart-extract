@@ -21,9 +21,17 @@ structured-outputs contract, 2026-06-27):
   are never sent — GPT-5.x reasoning models reject non-default sampling, and determinism is
   best-effort regardless. The construction path is this class alone, so a param can't leak.
 - **No citations feature** is enabled (grounding stays in code, Split 02).
-- **Usage:** ``prompt_tokens`` → ``input_tokens``, ``completion_tokens`` → ``output_tokens``; the
-  cache-read bucket is left ``0`` (OpenAI's ``prompt_tokens`` already includes any cached prefix and
-  there is no separate read surcharge — honest, not faked).
+- **Usage / prompt caching (Split 11):** ``completion_tokens`` → ``output_tokens``. OpenAI's
+  ``prompt_tokens`` *includes* any automatically-cached prefix, and the cached count is reported on
+  ``usage.prompt_tokens_details.cached_tokens``. We split it: ``input_tokens`` = the **fresh**
+  (uncached) prompt tokens and ``cache_read_input_tokens`` = the cached count — so :func:`price`
+  never double-counts (it bills both buckets at the input rate). OpenAI caching is **automatic**:
+  no ``cache_control`` param exists; a prefix is cached once it clears ~1024 tokens
+  (:data:`~chartextract.cost.MIN_CACHEABLE_PREFIX_TOKENS`). The Anthropic analogue is
+  ``cache_control: {"type": "ephemeral"}`` on the stable ``system`` + schema prefix (4096-token
+  floor on Opus). Either way the cache only hits because we keep that prefix **stable and first**
+  (``system`` message, then the per-doc ``DOCUMENT:`` turn) — verify a hit via
+  ``usage.cache_read_input_tokens``. A miss on one short demo doc (sub-floor) is expected.
 
 **Deviation from the Split 04 brief (recorded in ``00-PROGRESS.md``):** the brief names an Anthropic
 ``AnthropicProvider``; the only credential available in this repo is an Azure **GPT-5.5** key (the
@@ -297,12 +305,22 @@ def _strict_response_format(schema_model: type[BaseModel]) -> dict[str, Any]:
 
 
 def _usage(resp: Any) -> Usage:
-    """Map OpenAI usage onto the normalized buckets (cache-read stays 0 — see ``cost.py``)."""
+    """Map OpenAI usage onto the normalized buckets, splitting out the auto-cached prefix.
+
+    ``prompt_tokens`` includes any cached prefix; ``prompt_tokens_details.cached_tokens`` is the
+    cached count. We surface the cached count as ``cache_read_input_tokens`` and keep
+    ``input_tokens`` as the *fresh* remainder, so :func:`~chartextract.cost.price` (which bills both
+    buckets at the input rate) never double-counts. See the module docstring.
+    """
     u = getattr(resp, "usage", None)
     if u is None:
         return Usage()
+    prompt = getattr(u, "prompt_tokens", 0) or 0
+    details = getattr(u, "prompt_tokens_details", None)
+    cached = (getattr(details, "cached_tokens", 0) or 0) if details is not None else 0
+    cached = min(cached, prompt)  # defensive: never report more cached than total prompt
     return Usage(
-        input_tokens=getattr(u, "prompt_tokens", 0) or 0,
+        input_tokens=prompt - cached,
         output_tokens=getattr(u, "completion_tokens", 0) or 0,
-        cache_read_input_tokens=0,
+        cache_read_input_tokens=cached,
     )

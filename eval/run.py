@@ -36,20 +36,26 @@ from pathlib import Path
 from pydantic import BaseModel, ConfigDict
 
 from chartextract import (
+    BATCH_DISCOUNT,
+    PRICING,
     PROMPT_VERSION,
     SCHEMAS,
+    BatchRequest,
     ExtractionResult,
     Field,
     ListField,
     ProviderError,
     StubProvider,
     Usage,
+    collate_results,
     default_provider,
     extract,
     field_names,
     live_key_present,
     price,
+    run_openai_batch,
 )
+from chartextract.prompts import EXTRACTION_SYSTEM, extraction_user_content
 from chartextract.router import UnknownDocTypeError
 
 from .dataset import GOLD_DIR, GoldRecord, load_doc_text, load_gold
@@ -63,9 +69,11 @@ from .normalize import (
     scalar_match,
 )
 
-#: The reference token usage for the Opus-vs-Sonnet cost row (the stub's per-doc usage). The Sonnet
-#: figure is a **computed-from-pricing estimate** this split; the real measured Sonnet row is wired
-#: in Split 11. Both are priced from this same usage so the comparison is apples-to-apples.
+#: The reference token usage for the Opus-vs-Sonnet cost row (the stub's per-doc usage). Both
+#: Anthropic rows are **computed-from-pricing estimates** (this realized build has no Anthropic key,
+#: so they can't be measured) — priced from this same usage so the comparison is apples-to-apples.
+#: A live sweep adds the one row that IS measured: the run's own model from its real usage
+#: (Split 11, ``aggregate``).
 REF_USAGE = Usage(input_tokens=1200, output_tokens=180)
 
 #: The default artifact directory (mirrors the template-repo's ``docs/eval/``).
@@ -359,6 +367,71 @@ def run_suite(
     return out, latencies
 
 
+#: The default batch backend: submit the live OpenAI Batch job (opt-in, needs a key).
+def _live_batch_fn(requests: list[BatchRequest]) -> dict[str, tuple[BaseModel, Usage]]:
+    return run_openai_batch(default_provider(), requests)
+
+
+def run_suite_batch(
+    records: list[GoldRecord],
+    *,
+    repeats: int,
+    batch_fn=_live_batch_fn,
+    model: str = "gpt-5.5",
+    provider_name: str = "openai-batch",
+    root: Path | str = GOLD_DIR,
+) -> tuple[list[DocRecord], list[float]]:
+    """Score the field-labeled docs through the **Batch API** (50% cheaper), not one call each.
+
+    Every schema-bearing gold doc becomes a :class:`~chartextract.BatchRequest` keyed by its id;
+    ``batch_fn`` submits them as one job and returns ``{custom_id: (parsed, usage)}`` **unordered**.
+    :func:`~chartextract.collate_results` re-associates each result to its request (surfacing any
+    missing id), then each parsed instance is replayed through the **same** ``load -> route ->
+    ground -> assemble -> score`` path as the sync sweep (via a one-shot :class:`StubProvider`), so
+    the field scores are identical — only the cost differs (priced at the
+    :data:`~chartextract.BATCH_DISCOUNT`). ``batch_fn`` is injectable so the gate's "batch == sync"
+    proof runs Tier-1 with a deterministic oracle and no network.
+
+    Batching pins each request's ``response_format`` up front, so routing is by the gold doc_type
+    (a batch request can't run the classifier inside itself); routing accuracy is the sync sweep's
+    job. Routing-only discharge docs (no schema) are not batched.
+    """
+    schema_records = [r for r in records if r.doc_type in SCHEMAS and r.labels]
+    out: list[DocRecord] = []
+    latencies: list[float] = []
+    for repeat in range(1, repeats + 1):
+        texts = {r.id: load_doc_text(r, root=root) for r in schema_records}
+        requests = [
+            BatchRequest(
+                custom_id=r.id,
+                system=EXTRACTION_SYSTEM,
+                document_text=extraction_user_content(texts[r.id]),
+                schema_model=SCHEMAS[r.doc_type],
+            )
+            for r in schema_records
+        ]
+        results = batch_fn(requests)
+        # collate_results surfaces any missing custom_id and re-orders to the request order.
+        by_id = {req.custom_id: result for req, result in collate_results(requests, results)}
+        for r in schema_records:
+            parsed, usage = by_id[r.id]
+            stub = StubProvider(
+                extract_results=[parsed],
+                classify_result=(r.doc_type, 0.99),
+                usage=usage,
+                model=model,
+            )
+            rec, latency = run_doc(
+                r, texts[r.id], provider=stub, provider_name=provider_name, repeat=repeat
+            )
+            # The batch is ~50% cheaper than the sync call — reflect the real billed cost.
+            rec = rec.model_copy(update={"cost_usd": rec.cost_usd * BATCH_DISCOUNT})
+            out.append(rec)
+            if rec.error is None and rec.scored:
+                latencies.append(latency)
+    return out, latencies
+
+
 # ---------------------------------------------------------------------------
 # Aggregation → Leaderboard.
 # ---------------------------------------------------------------------------
@@ -393,6 +466,10 @@ class CostRow(BaseModel):
 
     model: str
     cost_per_doc: float
+    #: True only when the row priced a **real** sweep (this run's measured per-doc usage). The
+    #: Anthropic comparison rows are computed-from-pricing **estimates** (no Anthropic key in this
+    #: build), so they carry ``measured=False`` — never an estimate shown as measured (§9 honesty).
+    measured: bool = False
 
 
 class Leaderboard(BaseModel):
@@ -515,10 +592,17 @@ def aggregate(
     empty_kind_acc = sum(1 for k in kind_samples if k) / len(kind_samples) if kind_samples else None
 
     measured = statistics.mean([r.cost_usd for r in scored]) if scored else 0.0
+    # Anthropic comparison rows: priced from the same REF_USAGE under each model — ESTIMATES (no
+    # Anthropic key in this realized build). The Opus-vs-Sonnet delta is the spec's cost-trade.
     cost_rows = [
         CostRow(model="claude-opus-4-8", cost_per_doc=price(REF_USAGE, "claude-opus-4-8")),
         CostRow(model="claude-sonnet-4-6", cost_per_doc=price(REF_USAGE, "claude-sonnet-4-6")),
     ]
+    # A live sweep (not the deterministic stub) adds the one MEASURED row: the run's own model
+    # priced from its real per-doc usage. This is the only row marked measured=True.
+    run_model = scored[0].model if scored else None
+    if provider != "stub" and run_model is not None and run_model in PRICING:
+        cost_rows.append(CostRow(model=run_model, cost_per_doc=measured, measured=True))
     opus, sonnet = cost_rows[0].cost_per_doc, cost_rows[1].cost_per_doc
     delta = round(100.0 * (opus - sonnet) / opus, 1) if opus else None
 
@@ -592,10 +676,10 @@ def render_leaderboard(lb: Leaderboard, latencies: list[float] | None = None) ->
 
     lines += ["", "  -- cost comparison (per doc) --"]
     for row in lb.cost_rows:
-        tag = ""
+        tag = "(measured)" if row.measured else "(estimate)"
         if row.model == "claude-sonnet-4-6" and lb.sonnet_cost_delta_pct is not None:
-            tag = f"   (down {lb.sonnet_cost_delta_pct:.0f}% cost, estimate)"
-        lines.append(f"  {row.model:<20} ${row.cost_per_doc:.4f}/doc{tag}")
+            tag = f"(down {lb.sonnet_cost_delta_pct:.0f}% cost vs Opus, estimate)"
+        lines.append(f"  {row.model:<20} ${row.cost_per_doc:.4f}/doc   {tag}")
     lines.append(
         f"  measured this run    ${lb.measured_cost_per_doc:.4f}/doc  (provider {lb.provider})"
     )
@@ -676,6 +760,11 @@ def _build_parser() -> argparse.ArgumentParser:
         help="stub (default, deterministic, no key) or a live provider (opt-in, needs a key)",
     )
     p.add_argument("--repeats", type=int, default=1, help="repeats per doc (N); stub spread is ~0")
+    p.add_argument(
+        "--batch",
+        action="store_true",
+        help="run the live sweep through the Batch API (50%% cheaper; needs a live key)",
+    )
     p.add_argument("--gold", default=str(GOLD_DIR), help="gold-set root")
     p.add_argument("--date", default=None, help="artifact date stamp (YYYYMMDD); default today")
     p.add_argument(
@@ -719,9 +808,21 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     repeats = max(1, args.repeats)
-    doc_records, latencies = run_suite(
-        records, provider_name=provider_name, repeats=repeats, root=args.gold
-    )
+    use_batch = args.batch and provider_name != "stub"
+    if args.batch and provider_name == "stub":
+        print(
+            "note: --batch needs a live key (the Batch API is a network call) - "
+            "running the synchronous stub sweep instead.",
+            file=sys.stderr,
+        )
+    if use_batch:
+        doc_records, latencies = run_suite_batch(
+            records, repeats=repeats, model=default_provider().model, root=args.gold
+        )
+    else:
+        doc_records, latencies = run_suite(
+            records, provider_name=provider_name, repeats=repeats, root=args.gold
+        )
 
     n_docs = sum(1 for r in records if r.labels)
     stamp = args.date or _today_stamp()
@@ -729,7 +830,7 @@ def main(argv: list[str] | None = None) -> int:
         doc_records,
         n_docs=n_docs,
         generated_at=stamp,
-        provider=provider_name,
+        provider="openai-batch" if use_batch else provider_name,
         repeats=repeats,
     )
     rendered = render_leaderboard(leaderboard, latencies)

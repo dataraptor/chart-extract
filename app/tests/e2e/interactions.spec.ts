@@ -39,6 +39,17 @@ test.describe("interactions", () => {
     expect(parsed.schema_version).toBe("v2");
   });
 
+  test("cost chip exposes the input/output/cache token breakdown tooltip (Split 11)", async ({
+    page,
+  }) => {
+    await bootExtraction(page);
+    const chip = page.getByTestId("cost-chip");
+    await expect(chip).toBeVisible();
+    // The $/run tooltip breaks the cost down into the engine's token buckets (UIUX §5.4).
+    const tip = await chip.getAttribute("title");
+    expect(tip).toMatch(/input \d+ · output \d+ · cache-read \d+/);
+  });
+
   test("schema/sample switch re-extracts: intake shows the ListField + pcp not_found", async ({
     page,
   }) => {

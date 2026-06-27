@@ -167,6 +167,48 @@ test("toFooterCounts(caught): not_grounded surfaced in the counts", () => {
   assert.match(f.countsText, /not_grounded/);
 });
 
+// --- cost tooltip token breakdown (Split 11, UIUX §5.4) ---------------------
+
+test("toFooterCounts(path): cost tooltip carries the engine token breakdown", () => {
+  const f = Map.toFooterCounts(pathResult);
+  assert.equal(f.tokens.input, 1200);
+  assert.equal(f.tokens.output, 180);
+  assert.equal(f.tokens.cache, 0); // sub-floor demo doc → honest cache miss
+  assert.equal(f.tokens.text, "input 1200 · output 180 · cache-read 0");
+});
+
+test("toCostBreakdown: surfaces a non-zero cache-read when the prefix cached", () => {
+  const cached = { input_tokens: 904, output_tokens: 180, cache_read_tokens: 4096 };
+  const b = Map.toCostBreakdown(cached);
+  assert.equal(b.input, 904);
+  assert.equal(b.cache, 4096);
+  assert.equal(b.text, "input 904 · output 180 · cache-read 4096");
+});
+
+test("toCostBreakdown: missing token fields read as 0 (never NaN)", () => {
+  const b = Map.toCostBreakdown({});
+  assert.equal(b.input, 0);
+  assert.equal(b.output, 0);
+  assert.equal(b.cache, 0);
+  assert.equal(b.text, "input 0 · output 0 · cache-read 0");
+});
+
+test("toEvalView: cost rows carry the measured-vs-estimated label (Split 11)", () => {
+  const v = Map.toEvalView(evalReport);
+  assert.ok(v.cost.length >= 2);
+  // The frozen-stub artifact's Anthropic rows are estimates, never presented as measured.
+  for (const c of v.cost) {
+    assert.equal(c.measured, false);
+    assert.equal(c.basis, "estimate");
+  }
+  // A measured row (live sweep) labels itself accordingly.
+  const live = Map.toEvalView({
+    cost: [{ model: "gpt-5.5", f1: 0.87, usd_per_doc: 0.0056, measured: true }],
+  });
+  assert.equal(live.cost[0].measured, true);
+  assert.equal(live.cost[0].basis, "measured");
+});
+
 test("toJsonText: the raw ExtractionResult with real offsets, round-trips", () => {
   const txt = Map.toJsonText(pathResult);
   const parsed = JSON.parse(txt);

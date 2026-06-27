@@ -129,11 +129,14 @@ python -m eval.run --provider openai      # live GPT-5.5 sweep (needs a key, opt
 ```
 
 It scores per-field precision/recall/F1, macro-F1, **hallucination-rate** (a non-null value where the
-gold is null, counted loudly), routing accuracy, and a per-doc cost comparison.
+gold is null, counted loudly), routing accuracy, and a per-doc cost comparison. Add `--batch` to a
+live sweep to run it through the **Batch API** (~50% cheaper; results re-keyed by `custom_id`).
 
 > **Honesty caption.** The gold set is small and **synthetic — never real PHI**; report F1 with wide
 > intervals (run `--repeats N` to see the spread). **ChartExtract is not a medical device** — it is a
-> demonstration. The Sonnet cost row is the spec's estimate (the measured row lands in a later cost pass).
+> demonstration. The cost rows are labeled **measured** vs **estimate**: the live model (GPT-5.5,
+> ~`$0.005/doc` on the path report) is measured from real usage; the Anthropic Opus/Sonnet rows are
+> computed-from-pricing **estimates** (no Anthropic key in this build) — never shown as measured.
 
 ## Layout
 

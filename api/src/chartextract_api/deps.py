@@ -190,6 +190,7 @@ def build_eval_summary() -> EvalSummary:
             f1=lb.macro_f1.mean,
             usd_per_doc=cr.cost_per_doc,
             delta=(lb.sonnet_cost_delta_pct if cr.model == "claude-sonnet-4-6" else None),
+            measured=cr.measured,
         )
         for cr in lb.cost_rows
     ]

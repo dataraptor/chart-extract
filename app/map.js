@@ -143,6 +143,28 @@
       pv: "prompt " + (result.prompt_version || ""),
       sv: "schema " + (result.schema_version || ""),
       model: result.model || "",
+      // The $/run cost-tooltip breakdown (UIUX §5.4, Split 11) — engine token buckets, verbatim.
+      tokens: toCostBreakdown(result),
+    };
+  }
+
+  /**
+   * The footer cost-tooltip body: the per-run input / output / cache-read token counts the engine
+   * recorded, plus a ready-to-render "input X · output Y · cache-read Z" string. `cache` is `> 0`
+   * only when the shared prefix cleared the model's caching floor — a short demo doc reads `0`
+   * (honest, not faked). Consumed by the footer `$/run` tooltip; the values are never re-derived.
+   */
+  function toCostBreakdown(result) {
+    result = result || {};
+    var input = result.input_tokens || 0;
+    var output = result.output_tokens || 0;
+    var cache = result.cache_read_tokens || 0;
+    return {
+      input: input,
+      output: output,
+      cache: cache,
+      text:
+        "input " + input + " · output " + output + " · cache-read " + cache,
     };
   }
 
@@ -174,6 +196,9 @@
         f1: Number(c.f1 || 0).toFixed(2),
         usd: fmtCost(c.usd_per_doc) + "/doc",
         delta: c.delta != null ? Math.round(c.delta) + "%" : null,
+        // measured-vs-estimated honesty (Split 11): a real sweep vs a priced reference row.
+        measured: !!c.measured,
+        basis: c.measured ? "measured" : "estimate",
       };
     });
     return {
@@ -325,6 +350,7 @@
     toFieldRows: toFieldRows,
     toHighlightRanges: toHighlightRanges,
     toFooterCounts: toFooterCounts,
+    toCostBreakdown: toCostBreakdown,
     toJsonText: toJsonText,
     toEvalView: toEvalView,
     highlightDisabled: highlightDisabled,

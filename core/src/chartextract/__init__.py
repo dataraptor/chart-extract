@@ -13,10 +13,21 @@ Split 03 wires it all into the end-to-end **pipeline** (`extract`) over a **prov
 
 Split 04 adds the **live** backend (`OpenAIProvider` — Azure OpenAI GPT-5.5) selected by
 `default_provider()` when a key is configured; the same `extract()` now runs live or on the stub.
+
+Split 11 makes the cost story real: prompt-prefix caching is surfaced (`cache_read_tokens` on
+`ExtractionResult`, priced via `price`), the eval sweep can run through the **Batch API** (50%
+cheaper, `BatchRequest` + `collate_results`, keyed by `custom_id`), and pricing is reconciled
+against the `claude-api` reference (`PRICING`, `MIN_CACHEABLE_PREFIX_TOKENS`).
 """
 
 from __future__ import annotations
 
+from .batch import (
+    BatchRequest,
+    MissingBatchResultError,
+    collate_results,
+    run_openai_batch,
+)
 from .confidence import (
     AMBIG_MAX_NONSPACE,
     MATCH_WEIGHT,
@@ -25,7 +36,14 @@ from .confidence import (
     nonspace_len,
     structural_confidence,
 )
-from .cost import PRICING, Usage, price
+from .cost import (
+    BATCH_DISCOUNT,
+    MIN_CACHEABLE_PREFIX_TOKENS,
+    PRICING,
+    Usage,
+    price,
+    price_batch,
+)
 from .grounding import SpanMatch, ground, ground_fields
 from .load import LoadedDoc, load
 from .pipeline import extract
@@ -86,7 +104,10 @@ __all__ = [
     "PROMPT_VERSION",
     "Usage",
     "price",
+    "price_batch",
     "PRICING",
+    "BATCH_DISCOUNT",
+    "MIN_CACHEABLE_PREFIX_TOKENS",
     "ProviderClient",
     "ProviderError",
     "MissingAPIKeyError",
@@ -98,4 +119,9 @@ __all__ = [
     # Split 04 — live provider (Azure OpenAI GPT-5.5).
     "default_provider",
     "live_key_present",
+    # Split 11 — batch API (50% cheaper, unordered → key by custom_id).
+    "BatchRequest",
+    "collate_results",
+    "MissingBatchResultError",
+    "run_openai_batch",
 ]

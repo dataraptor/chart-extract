@@ -83,7 +83,7 @@
     <span style="display:flex;align-items:center;gap:7px;padding:6px 11px;border-radius:8px;background:#F1F3F6;box-shadow:inset 0 0 0 1px #E8EAEE;font-family:'JetBrains Mono',monospace;font-size:12px;color:#545B66;">
       <span style="width:6px;height:6px;border-radius:50%;background:#3975EE;"></span>{{ modelChip }}
     </span>
-    <span style="display:flex;align-items:center;padding:6px 11px;border-radius:8px;background:#E7F4EC;box-shadow:inset 0 0 0 1px rgba(21,145,91,.20);font-family:'JetBrains Mono',monospace;font-size:12px;color:#0B6E3F;">{{ cost }}/run</span>
+    <span data-testid="cost-chip" title="{{ costTip }}" style="display:flex;align-items:center;padding:6px 11px;border-radius:8px;background:#E7F4EC;box-shadow:inset 0 0 0 1px rgba(21,145,91,.20);font-family:'JetBrains Mono',monospace;font-size:12px;color:#0B6E3F;cursor:help;">{{ cost }}/run</span>
 
     <button onClick="{{ rerun }}" title="Re-run extraction" style="display:flex;align-items:center;justify-content:center;width:33px;height:33px;border:none;cursor:pointer;font-size:15px;color:#545B66;background:#FFFFFF;border-radius:8px;box-shadow:inset 0 0 0 1px #E2E5EA;transition:all 150ms ease;" style-hover="color:#15181D;box-shadow:inset 0 0 0 1px #CFD3DA;background:#F6F7F9;">&#8635;</button>
   </header>
@@ -693,7 +693,8 @@ SMOKING STATUS: Former smoker, quit 2015.`;
     // and scripted-caught mode keep today's computed/canned values.
     const footer = live
       ? window.ChartExtractMap.toFooterCounts(S.result)
-      : { countsText, cost:'$0.021', latency:'3.4s', pv:'prompt v3', sv:'schema v2', model:'claude-opus-4-8' };
+      : { countsText, cost:'$0.021', latency:'3.4s', pv:'prompt v3', sv:'schema v2', model:'claude-opus-4-8',
+          tokens:{ input:1200, output:180, cache:0, text:'input 1200 · output 180 · cache-read 0' } };
     const jsonText = live ? window.ChartExtractMap.toJsonText(S.result) : this.jsonText(gf);
     const ev = S.evalReport
       ? window.ChartExtractMap.toEvalView(S.evalReport)
@@ -760,6 +761,7 @@ SMOKING STATUS: Former smoker, quit 2015.`;
       documentBody,
       showJSON: S.showJSON, jsonText,
       countsText: footer.countsText, modelChip: footer.model, cost: footer.cost, latency: footer.latency, pv: footer.pv, sv: footer.sv,
+      costTip: (footer.tokens && footer.tokens.text) || '',
       evalRows: ev.evalRows, macroF1: ev.macroF1, halluc: ev.halluc, routing: ev.routing, goldCount: ev.goldCount,
       extBg: S.view==='extraction' ? '#FFFFFF' : 'transparent',
       extColor: S.view==='extraction' ? '#15181D' : '#5A616B',

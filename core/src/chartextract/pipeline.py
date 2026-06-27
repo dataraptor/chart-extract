@@ -87,5 +87,8 @@ def extract(
         model=provider.model,
         cost_usd=price(usage, provider.model),
         latency_s=latency_s,
+        input_tokens=usage.input_tokens,
+        output_tokens=usage.output_tokens,
+        cache_read_tokens=usage.cache_read_input_tokens,
         highlight_available=loaded.has_text_layer,
     )

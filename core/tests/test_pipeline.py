@@ -56,6 +56,18 @@ def test_path_report_end_to_end(path_report_path):
     assert result.highlight_available is True
 
 
+def test_result_carries_token_breakdown_for_the_cost_tooltip(path_report_path):
+    # Split 11: the per-run input/output/cache token buckets behind the footer $/run tooltip.
+    from chartextract import Usage
+
+    stub = stub_for_path_report()
+    stub._usage = Usage(input_tokens=1200, output_tokens=180, cache_read_input_tokens=64)
+    result = extract(path_report_path, schema="pathology", provider=stub)
+    assert result.input_tokens == 1200
+    assert result.output_tokens == 180
+    assert result.cache_read_tokens == 64
+
+
 def test_every_grounded_field_offset_is_real_substring(path_report_path):
     from chartextract import load
 

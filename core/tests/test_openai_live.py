@@ -59,3 +59,57 @@ def test_live_classify_doc_type_is_pathology(path_report_path) -> None:
     assert key == "pathology"
     assert conf >= 0.5
     assert usage.input_tokens > 0
+
+
+def test_live_caching_breakdown_is_honest(path_report_path) -> None:
+    """Split 11: the per-run token breakdown is real, and a sub-floor cache MISS is handled.
+
+    The demo doc's prefix is well under GPT-5.5's ~1024-token caching floor, so a cache miss
+    (``cache_read_tokens == 0``) is the *expected* outcome, asserted as handled — never a failure.
+    Whatever the provider reports, the buckets must be non-negative and the fresh input must be > 0.
+    """
+    r1 = extract(path_report_path, schema="pathology", provider=OpenAIProvider())
+    # Second call: the provider MAY now serve the prefix from cache (only if it cleared the floor).
+    r2 = extract(path_report_path, schema="pathology", provider=OpenAIProvider())
+    for r in (r1, r2):
+        assert r.input_tokens > 0
+        assert r.output_tokens > 0
+        assert r.cache_read_tokens >= 0  # 0 (sub-floor miss) is fine — handled, not an error
+        # cost prices both input buckets at the input rate; never understated.
+        assert r.cost_usd > 0
+
+
+@pytest.mark.skipif(
+    not os.environ.get("CHARTEXTRACT_RUN_BATCH"),
+    reason="live Batch API is async (minutes); set CHARTEXTRACT_RUN_BATCH=1 to run it",
+)
+def test_live_batch_sweep_reassociates_by_custom_id(path_report_path, intake_form_path) -> None:
+    """A small live Batch sweep: results come back unordered and re-key by ``custom_id``.
+
+    Opt-in (``CHARTEXTRACT_RUN_BATCH=1``) because the Batch API is asynchronous and can take several
+    minutes. Proves the realized OpenAI batch path end-to-end: submit → poll → collect → collate.
+    """
+    from chartextract import BatchRequest, collate_results, run_openai_batch
+    from chartextract.prompts import EXTRACTION_SYSTEM, extraction_user_content
+    from chartextract.schemas import IntakeSchema, PathologySchema
+
+    provider = OpenAIProvider()
+    docs = [
+        ("path", path_report_path.read_text(encoding="utf-8"), PathologySchema),
+        ("intake", intake_form_path.read_text(encoding="utf-8"), IntakeSchema),
+    ]
+    requests = [
+        BatchRequest(
+            custom_id=cid,
+            system=EXTRACTION_SYSTEM,
+            document_text=extraction_user_content(text),
+            schema_model=schema,
+        )
+        for cid, text, schema in docs
+    ]
+    results = run_openai_batch(provider, requests, poll_seconds=15.0)
+    pairs = collate_results(requests, results)  # surfaces a missing id; re-orders by request
+    assert [r.custom_id for r, _ in pairs] == ["path", "intake"]
+    for req, (parsed, usage) in pairs:
+        assert isinstance(parsed, req.schema_model)
+        assert usage.input_tokens + usage.cache_read_input_tokens > 0

@@ -27,8 +27,8 @@
   Empty-kind agreement  1.00   (not_found vs not_assessed labelled correctly)
 
   -- cost comparison (per doc) --
-  claude-opus-4-8      $0.0105/doc
-  claude-sonnet-4-6    $0.0063/doc   (down 40% cost, estimate)
+  claude-opus-4-8      $0.0105/doc   (estimate)
+  claude-sonnet-4-6    $0.0063/doc   (down 40% cost vs Opus, estimate)
   measured this run    $0.0105/doc  (provider stub)
   latency  mean 0.000s  max 0.000s  (n=15)
 

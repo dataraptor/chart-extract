@@ -187,6 +187,16 @@ class ExtractionResult(BaseModel):
     model: str
     cost_usd: float = 0.0
     latency_s: float = 0.0
+    input_tokens: int = 0
+    output_tokens: int = 0
+    cache_read_tokens: int = 0
+    """Per-run token breakdown behind the footer's ``$/run`` cost tooltip (UIUX §5.4, Split 11).
+
+    ``input_tokens`` is the **fresh** (uncached) prompt tokens, ``cache_read_tokens`` the
+    prefix served from cache (``> 0`` only when the shared prefix cleared the model's caching floor
+    — :data:`~chartextract.cost.MIN_CACHEABLE_PREFIX_TOKENS`), ``output_tokens`` the completion. The
+    tooltip renders "input X · output Y · cache-read Z"; ``cost_usd`` prices the same buckets.
+    """
     highlight_available: bool = True
     """Whether character offsets are usable for highlighting.
 
